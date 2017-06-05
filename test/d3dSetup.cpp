@@ -22,8 +22,3 @@ void populateAdapterList(IDXGIFactory * factory, std::vector<ComPtr<IDXGIAdapter
 		out.push_back(adapter);
 	}
 }
-
-void foo()
-{
-	std::cout << "This is a test." << std::endl;
-}

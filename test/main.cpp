@@ -29,7 +29,6 @@ int run_main()
 	populateAdapterList(factory.Get(), adapters);
 	log_adapters(adapters);
 
-	foo();
 	int i;
 	cin >> i;
 
