@@ -27,12 +27,14 @@ int main()
 	std::cout << "Hello!" << std::endl;
 
 	{
-		vector<Classy> classies;
-		classies.push_back(Classy(1));
-		classies.push_back(2);
+		vector<Classy> * classies = new vector<Classy>();
+		classies->push_back(Classy(1));
+		classies->push_back(2);
 		Classy * classy = new Classy(3);
-		classies.push_back(*classy);
-		cout << classies.size() << endl;
+		classies->push_back(*classy);
+		cout << classies->size() << endl;
+		delete classy;
+		delete classies;
 	}
 
 	ComPtr<IDXGIFactory> factory;
@@ -41,5 +43,9 @@ int main()
 	foo();
 	int i;
 	std::cin >> i;
+
+	if (_CrtDumpMemoryLeaks())
+		throw "Memory Leak Detected";
+
 	return i;
 }
