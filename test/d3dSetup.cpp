@@ -22,3 +22,15 @@ void populateAdapterList(IDXGIFactory * factory, std::vector<ComPtr<IDXGIAdapter
 		out.push_back(adapter);
 	}
 }
+
+void populateAdapterOutputList(IDXGIAdapter *adapter, std::vector<Microsoft::WRL::ComPtr<IDXGIOutput>> & out)
+{
+	uint i = 0;
+	while (true)
+	{
+		ComPtr<IDXGIOutput> output;
+		if (hrThrowIfFailed(adapter->EnumOutputs(i, output.GetAddressOf()) == DXGI_ERROR_NOT_FOUND))
+			break;
+		out.push_back(output);
+	}
+}
