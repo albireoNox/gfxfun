@@ -34,3 +34,16 @@ void populateAdapterOutputList(IDXGIAdapter* adapter, std::vector<Microsoft::WRL
 		out.push_back(output);
 	}
 }
+
+void populateOutputDisplayModeList(IDXGIOutput* output, std::vector<DXGI_MODE_DESC>& out)
+{
+	UINT count = 0;
+	DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	UINT flags = DXGI_ENUM_MODES_INTERLACED;
+
+	hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, nullptr));
+	out.resize(count);
+	if (count == 0)
+		return;
+	hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, &out[0]));
+}

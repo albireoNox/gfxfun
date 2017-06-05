@@ -9,6 +9,20 @@ using namespace std;
 
 static const wchar_t* TAB = L"  ";
 
+void logOutputDisplayModes(IDXGIOutput* output, wstring indent)
+{
+	vector<DXGI_MODE_DESC> modes;
+	populateOutputDisplayModeList(output, modes);
+
+	for (uint i = 0; i < modes.size(); i++)
+	{
+		wcout << indent
+			<< "Size: " << modes[i].Width << "X" << modes[i].Height
+			<< " Refresh: " << modes[i].RefreshRate.Numerator << "/" << modes[i].RefreshRate.Denominator
+			<< endl;
+	}
+}
+
 void logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 {
 	vector<ComPtr<IDXGIOutput>> outputs;
@@ -26,6 +40,8 @@ void logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 			<< description.DesktopCoordinates.top    << ", "
 			<< description.DesktopCoordinates.right  << ", "
 			<< description.DesktopCoordinates.bottom << ")" << endl;
+		wcout << indent << "Display Modes:" << endl;
+		logOutputDisplayModes(output, indent + TAB);
 	}
 }
 
