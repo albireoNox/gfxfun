@@ -16,6 +16,9 @@ void log_adapters(vector<ComPtr<IDXGIAdapter>> & adapters)
 		DXGI_ADAPTER_DESC description;
 		hrThrowIfFailed(adapter->GetDesc(&description));
 		wcout << description.Description << endl;
+		wcout << (double)description.DedicatedVideoMemory  / GIGABYTE << " GB of dedicated video memory."  << endl;
+		wcout << (double)description.DedicatedSystemMemory / GIGABYTE << " GB of dedicated system memory." << endl;
+		wcout << (double)description.SharedSystemMemory    / GIGABYTE << " GB of shared system memory."    << endl;
 	}
 }
 
