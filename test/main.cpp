@@ -12,7 +12,7 @@ int run_main()
 	ComPtr<IDXGIFactory> factory;
 	initDxgiFactory(factory);
 	std::vector<ComPtr<IDXGIAdapter>> adapters;
-	populateAdapterList(factory.Get(), &adapters);
+	populateAdapterList(factory.Get(), adapters);
 
 	foo();
 	int i;

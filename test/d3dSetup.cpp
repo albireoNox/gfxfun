@@ -11,7 +11,7 @@ void initDxgiFactory(ComPtr<IDXGIFactory> & out)
 	hrThrowIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)out.GetAddressOf()));
 }
 
-void populateAdapterList(IDXGIFactory * factory, std::vector<ComPtr<IDXGIAdapter>> * out)
+void populateAdapterList(IDXGIFactory * factory, std::vector<ComPtr<IDXGIAdapter>> & out)
 {
 	uint i = 0;
 	while (true)
@@ -19,7 +19,7 @@ void populateAdapterList(IDXGIFactory * factory, std::vector<ComPtr<IDXGIAdapter
 		ComPtr<IDXGIAdapter> adapter;
 		if (hrThrowIfFailed(factory->EnumAdapters(i++, adapter.GetAddressOf()) == DXGI_ERROR_NOT_FOUND))
 			break;
-		out->push_back(adapter);
+		out.push_back(adapter);
 	}
 }
 
