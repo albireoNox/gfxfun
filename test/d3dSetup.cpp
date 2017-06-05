@@ -29,7 +29,7 @@ void populateAdapterOutputList(IDXGIAdapter *adapter, std::vector<Microsoft::WRL
 	while (true)
 	{
 		ComPtr<IDXGIOutput> output;
-		if (hrThrowIfFailed(adapter->EnumOutputs(i, output.GetAddressOf()) == DXGI_ERROR_NOT_FOUND))
+		if (hrThrowIfFailed(adapter->EnumOutputs(i++, output.GetAddressOf()) == DXGI_ERROR_NOT_FOUND))
 			break;
 		out.push_back(output);
 	}
