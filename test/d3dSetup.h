@@ -12,6 +12,6 @@ inline HRESULT hrThrowIfFailed(HRESULT hr)
 	return hr;
 }
 
-void initDxgiFactory(Microsoft::WRL::ComPtr<IDXGIFactory> &);
-void populateAdapterList(IDXGIFactory *, std::vector<Microsoft::WRL::ComPtr<IDXGIAdapter>> & out);
-void populateAdapterOutputList(IDXGIAdapter *, std::vector<Microsoft::WRL::ComPtr<IDXGIOutput>> & out);
+void initDxgiFactory(Microsoft::WRL::ComPtr<IDXGIFactory>&);
+void populateAdapterList(IDXGIFactory*, std::vector<Microsoft::WRL::ComPtr<IDXGIAdapter>>& out);
+void populateAdapterOutputList(IDXGIAdapter*, std::vector<Microsoft::WRL::ComPtr<IDXGIOutput>>& out);

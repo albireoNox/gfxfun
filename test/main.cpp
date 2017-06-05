@@ -7,16 +7,16 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-static const wchar_t * TAB = L"  ";
+static const wchar_t* TAB = L"  ";
 
-void logAdapterOutputs(IDXGIAdapter * adapter, wstring indent)
+void logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 {
 	vector<ComPtr<IDXGIOutput>> outputs;
 	populateAdapterOutputList(adapter, outputs);
 	for (uint i = 0; i < outputs.size(); i++)
 	{
 		wcout << indent << "* Output " << i << " *" << endl;
-		IDXGIOutput * output = outputs.at(i).Get();
+		IDXGIOutput* output = outputs.at(i).Get();
 		DXGI_OUTPUT_DESC description;
 		hrThrowIfFailed(output->GetDesc(&description));
 		indent += TAB;
@@ -29,13 +29,13 @@ void logAdapterOutputs(IDXGIAdapter * adapter, wstring indent)
 	}
 }
 
-void logAdapters(vector<ComPtr<IDXGIAdapter>> & adapters)
+void logAdapters(vector<ComPtr<IDXGIAdapter>>& adapters)
 {
 	cout << "Logging " << adapters.size() << " adapters." << endl;
 	for (uint i = 0; i < adapters.size(); i++)
 	{
 		cout << "*** Adapter " << i << " ***" << endl;
-		IDXGIAdapter * adapter = adapters.at(i).Get();
+		IDXGIAdapter* adapter = adapters.at(i).Get();
 		DXGI_ADAPTER_DESC description;
 		hrThrowIfFailed(adapter->GetDesc(&description));
 		wstring indent = TAB;
