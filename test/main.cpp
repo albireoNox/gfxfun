@@ -19,30 +19,29 @@ void log_adapters(vector<ComPtr<IDXGIAdapter>> & adapters)
 	}
 }
 
-int run_main()
+void run_main()
 {
 	cout << "Hello!" << endl;
+	cout << endl;
 
 	ComPtr<IDXGIFactory> factory;
 	initDxgiFactory(factory);
 	vector<ComPtr<IDXGIAdapter>> adapters;
 	populateAdapterList(factory.Get(), adapters);
+
 	log_adapters(adapters);
-
-	int i;
-	cin >> i;
-
-	return i;
+	cout << endl;
 }
 
 int main()
 {	
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	int i = run_main();
+	run_main();
 
 	if (_CrtDumpMemoryLeaks())
 		throw "Memory Leak Detected";
 
-	return i;
+	system("pause");
+	return 0;
 }
