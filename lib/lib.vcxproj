@@ -22,9 +22,11 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="d3dSetup.h" />
     <ClInclude Include="types.h" />
+    <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3dSetup.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

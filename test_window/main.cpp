@@ -1,3 +1,4 @@
+#include <lib/window.h>
 #include <iostream> 
 
 // Enables detection of memory leaks (Debug only).
@@ -7,9 +8,17 @@
 
 using namespace std;
 
+void run()
+{
+	wstring name = L"This is a window";
+	Window window(name);
+
+	wcout << "Name: " << window.name << endl;
+}
+
 int main()
  {
-	cout << "Hello" << endl;
+	run();
 
 	if (_CrtDumpMemoryLeaks())
 		throw "Memory Leak Detected";
