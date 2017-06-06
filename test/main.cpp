@@ -3,6 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <windows.h>
+
+extern "C" {
+	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
