@@ -10,6 +10,10 @@ using namespace std;
 int main()
  {
 	cout << "Hello" << endl;
+
+	if (_CrtDumpMemoryLeaks())
+		throw "Memory Leak Detected";
+
 	system("pause");
 	return 0;
  }
