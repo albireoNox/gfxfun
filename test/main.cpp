@@ -1,5 +1,5 @@
 #include "common.h"
-#include "d3dSetup.h"
+#include "lib/d3dSetup.h"
 #include <iostream>
 #include <string>
 #include <vector>
