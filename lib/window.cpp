@@ -1,5 +1,6 @@
 #include "window.h"
 
+#include "msg_debug.h"
 #include <Windows.h>
 #include <iostream>
 
@@ -10,6 +11,7 @@ static const wchar_t* WINDOW_CLASS = L"MainWindow";
 LRESULT CALLBACK
 handleMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 

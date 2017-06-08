@@ -19,12 +19,11 @@ void run(HINSTANCE hInstance)
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstace, LPSTR lpCmdLine, int nCmdShow)
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	setUpDebugWindow();
 	run(hInstance);
 	tearDownDebugWindow();
-
-	if (_CrtDumpMemoryLeaks())
-		throw "Memory Leak Detected";
 
 	system("pause");
 	return 0;
