@@ -7,6 +7,34 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
+FILE *stdoutStream;
+FILE *stderrStream;
+
+void setUpDebugWindow()
+{
+	AllocConsole();
+	freopen_s(&stdoutStream, "CONOUT$", "w", stdout);
+	freopen_s(&stderrStream, "CONOUT$", "w", stderr);
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTitle(L"Debug Output");
+
+	// give the console window a bigger buffer size
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	if (GetConsoleScreenBufferInfo(consoleHandle, &csbi))
+	{
+		COORD bufferSize;
+		bufferSize.X = csbi.dwSize.X;
+		bufferSize.Y = 9999;
+		SetConsoleScreenBufferSize(consoleHandle, bufferSize);
+	}
+}
+
+void tearDownDebugWindow()
+{
+	fclose(stdoutStream);
+	fclose(stderrStream);
+}
+
 void initDxgiFactory(ComPtr<IDXGIFactory>& out)
 {
 	hrThrowIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)out.GetAddressOf()));
