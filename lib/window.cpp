@@ -139,7 +139,7 @@ Window::createWindow()
 }
 
 Window::Window(const wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
-	name(name), hInstance(hInstance), clientWidth(clientWidth), clientHeight(clientWidth)
+	name(name), hInstance(hInstance), clientWidth(clientWidth), clientHeight(clientHeight)
 {
 	this->registerWindowClass();
 	this->createWindow();
