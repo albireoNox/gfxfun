@@ -22,7 +22,14 @@ handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 LRESULT Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
-	return DefWindowProc(this->windowHandle, msg, wParam, lParam);
+	switch(msg)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	default:
+		return DefWindowProc(this->windowHandle, msg, wParam, lParam);
+	}
 }
 
 void Window::registerWindowClass()
