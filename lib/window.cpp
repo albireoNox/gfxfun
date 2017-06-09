@@ -36,7 +36,6 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_SIZE:
-
 		this->onResize(LOWORD(lParam), HIWORD(lParam));
 		return 0;
 
