@@ -1,7 +1,8 @@
-#include "window.h"
+﻿#include "window.h"
 
 #include "msg_debug.h"
 #include <Windows.h>
+#include <Windowsx.h>
 #include <iostream>
 
 using namespace std;
@@ -26,6 +27,12 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CHAR:
 		wcout << "KEY PRESS: " << static_cast<wchar_t>(wParam) << endl;
+		return 0;
+
+	case WM_LBUTTONDOWN:
+		wcout << "LEFT MOUSE BUTTON DOWN @ ("
+			<< GET_X_LPARAM(lParam) << ", "
+			<< GET_Y_LPARAM(lParam) << ")" << endl;
 		return 0;
 
 	case WM_SIZE:
