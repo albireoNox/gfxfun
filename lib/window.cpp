@@ -7,7 +7,6 @@
 using namespace std;
 
 static const wchar_t* WINDOW_CLASS = L"MainWindow";
-static const int WINDOW_OBJ_INDEX = 0;
 
 LRESULT CALLBACK 
 handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -56,7 +55,7 @@ Window::registerWindowClass()
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc   = handleMsgCb;
 	wc.cbClsExtra    = 0;
-	wc.cbWndExtra    = sizeof(LONG_PTR);
+	wc.cbWndExtra    = 0;
 	wc.hInstance     = this->hInstance;
 	wc.hIcon         = LoadIcon(0, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(0, IDC_ARROW);
