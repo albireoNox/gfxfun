@@ -24,6 +24,10 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	//wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
 	switch(msg)
 	{
+	case WM_CHAR:
+		wcout << "KEY PRESS: " << static_cast<wchar_t>(wParam) << endl;
+		return 0;
+
 	case WM_SIZE:
 		// Save the new client area dimensions.
 		this->clientWidth  = LOWORD(lParam);
