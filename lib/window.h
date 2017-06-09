@@ -25,6 +25,7 @@ protected:
 private:
 	void registerWindowClass();
 	void createWindow();
+	void onResize();
 
 // State
 public:

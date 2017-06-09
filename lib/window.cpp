@@ -22,15 +22,31 @@ handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 LRESULT
 Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
+	//wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
 	switch(msg)
 	{
+	case WM_SIZE:
+		// Save the new client area dimensions.
+		this->clientWidth  = LOWORD(lParam);
+		this->clientHeight = HIWORD(lParam);
+		this->onResize();
+		wcout << "RESIZE - Window is now " << this->clientWidth << "X" << this->clientHeight << endl;
+		return 0;
+
 	case WM_DESTROY:
+		wcout << "DESTROYING WINDOW" << endl;
 		PostQuitMessage(0);
 		return 0;
+
 	default:
 		return DefWindowProc(this->windowHandle, msg, wParam, lParam);
 	}
+}
+
+void
+Window::onResize()
+{
+	
 }
 
 void
