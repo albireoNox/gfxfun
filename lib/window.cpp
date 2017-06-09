@@ -4,10 +4,11 @@
 #include <Windows.h>
 #include <Windowsx.h>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
-static const wchar_t* WINDOW_CLASS = L"MainWindow";
+uint Window::numOpenWindows = 0;
 
 LRESULT CALLBACK 
 handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -26,26 +27,21 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	switch(msg)
 	{
 	case WM_CHAR:
-		wcout << "KEY PRESS: " << static_cast<wchar_t>(wParam) << endl;
+		this->onCharInput(static_cast<wchar_t>(wParam));
 		return 0;
 
 	case WM_LBUTTONDOWN:
-		wcout << "LEFT MOUSE BUTTON DOWN @ ("
-			<< GET_X_LPARAM(lParam) << ", "
-			<< GET_Y_LPARAM(lParam) << ")" << endl;
+		// TODO This is not really a click.
+		this->onMouseLClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 
 	case WM_SIZE:
-		// Save the new client area dimensions.
-		this->clientWidth  = LOWORD(lParam);
-		this->clientHeight = HIWORD(lParam);
-		this->onResize();
-		wcout << "RESIZE - Window is now " << this->clientWidth << "X" << this->clientHeight << endl;
+
+		this->onResize(LOWORD(lParam), HIWORD(lParam));
 		return 0;
 
 	case WM_DESTROY:
-		wcout << "DESTROYING WINDOW" << endl;
-		PostQuitMessage(0);
+		this->onClose();
 		return 0;
 
 	default:
@@ -54,9 +50,34 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 void
-Window::onResize()
+Window::onCharInput(wchar_t ch)
 {
-	
+	wcout << this->name << ": KEY PRESS " << ch << endl;
+}
+
+void
+Window::onMouseLClick(int x, int y)
+{
+	wcout << this->name << ": LEFT MOUSE BUTTON CLICK @ (" << x << ", " << y << ")" << endl;
+}
+
+void
+Window::onResize(uint newClientWidth, uint newClientHeight)
+{
+	// Save the new client area dimensions.
+	this->clientWidth = newClientWidth;
+	this->clientHeight = newClientHeight;
+	wcout << this->name << ": RESIZE - Window is now "
+		<< this->clientWidth << "X" << this->clientHeight << endl;
+}
+
+void
+Window::onClose()
+{
+	wcout << this->name << ": DESTROYING WINDOW" << endl;
+	assert(Window::numOpenWindows > 0);
+	if (--Window::numOpenWindows == 0)
+		PostQuitMessage(0);
 }
 
 void
@@ -72,7 +93,7 @@ Window::registerWindowClass()
 	wc.hCursor       = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 	wc.lpszMenuName  = 0;
-	wc.lpszClassName = WINDOW_CLASS;
+	wc.lpszClassName = this->name.c_str();
 
 	if (!RegisterClass(&wc))
 		throw L"RegisterClass Failed.";
@@ -91,7 +112,7 @@ Window::createWindow()
 	cout << "Creating window with final size: " << width << "X" << height << endl;
 
 	this->windowHandle = CreateWindow(
-		WINDOW_CLASS,
+		this->name.c_str(), // Use name for class name.
 		this->name.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
@@ -113,6 +134,8 @@ Window::createWindow()
 
 	ShowWindow(this->windowHandle, SW_SHOW);
 	UpdateWindow(this->windowHandle);
+
+	Window::numOpenWindows++;
 }
 
 Window::Window(const wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :

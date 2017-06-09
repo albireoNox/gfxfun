@@ -26,7 +26,8 @@ run(HINSTANCE hInstance)
 	wstring name = L"This is a window";
 	Window window(name, 500, 500, hInstance);
 
-	wcout << "Name: " << window.name << endl;
+	wstring otherName = L"Other window";
+	Window otherWindow(otherName, 600, 100, hInstance);
 
 	runMsgLoop();
 }
