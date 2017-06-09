@@ -7,21 +7,31 @@
 using namespace std;
 
 static const wchar_t* WINDOW_CLASS = L"MainWindow";
+static const int WINDOW_OBJ_INDEX = 0;
 
-LRESULT CALLBACK
-handleMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK 
+handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	if (window != nullptr)
+		return window->handleMsg(msg, wParam, lParam);
+	else 
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
-	return DefWindowProc(hwnd, msg, wParam, lParam);
+	return DefWindowProc(this->windowHandle, msg, wParam, lParam);
 }
 
 void Window::registerWindowClass()
 {
 	WNDCLASS wc;
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc   = handleMsg;
+	wc.lpfnWndProc   = handleMsgCb;
 	wc.cbClsExtra    = 0;
-	wc.cbWndExtra    = 0;
+	wc.cbWndExtra    = sizeof(LONG_PTR);
 	wc.hInstance     = this->hInstance;
 	wc.hIcon         = LoadIcon(0, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(0, IDC_ARROW);
@@ -46,8 +56,8 @@ void Window::createWindow()
 
 	this->windowHandle = CreateWindow(
 		WINDOW_CLASS,
-		this->name.c_str()	,
-		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		this->name.c_str(),
+		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		width,
@@ -59,6 +69,11 @@ void Window::createWindow()
 
 	if (this->windowHandle == nullptr)
 		throw "Failed to create window";
+
+	SetLastError(0);
+	SetWindowLongPtr(this->windowHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+	if (GetLastError() != 0)
+		throw "Failed to bind window object.";
 
 	ShowWindow(this->windowHandle, SW_SHOW);
 	UpdateWindow(this->windowHandle);

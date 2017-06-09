@@ -15,6 +15,7 @@ public:
 		HINSTANCE hInstance);
 
 	~Window();
+	LRESULT handleMsg(UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
 	// Copying Window not allowed.
