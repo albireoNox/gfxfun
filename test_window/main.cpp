@@ -25,7 +25,8 @@ run(HINSTANCE hInstance)
 
 	wcout << "Name: " << window.name << endl;
 
-	runMsgLoop();
+	//runMsgLoop();
+	Foo i(500);
 }
 
 int CALLBACK

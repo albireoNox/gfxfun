@@ -4,6 +4,14 @@
 #include <string>
 #include <Windows.h>
 
+class Foo
+{
+public:
+	Foo(int i);
+	~Foo();
+	int i;
+};
+
 class Window
 {
 public:
@@ -35,4 +43,5 @@ protected:
 	HWND windowHandle;
 	uint clientWidth;
 	uint clientHeight;
+	Foo foo;
 };

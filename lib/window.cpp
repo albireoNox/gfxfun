@@ -105,7 +105,7 @@ Window::createWindow()
 }
 
 Window::Window(const wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
-	name(name), hInstance(hInstance), clientWidth(clientWidth), clientHeight(clientWidth)
+	name(name), hInstance(hInstance), clientWidth(clientWidth), clientHeight(clientWidth), foo(Foo(60))
 {
 	this->registerWindowClass();
 	this->createWindow();
@@ -114,4 +114,11 @@ Window::Window(const wstring& name, uint clientWidth, uint clientHeight, HINSTAN
 Window::~Window()
 {
 	// NOOP (for now)
+}
+
+Foo::Foo(int i) : i(i) { }
+
+Foo::~Foo()
+{
+	cout << "DESTROYING Foo #" << this->i << endl;
 }
