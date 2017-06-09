@@ -10,7 +10,8 @@ using namespace std;
 FILE *stdoutStream;
 FILE *stderrStream;
 
-void setUpDebugWindow()
+void
+setUpDebugWindow()
 {
 	AllocConsole();
 	freopen_s(&stdoutStream, "CONOUT$", "w", stdout);
@@ -29,18 +30,21 @@ void setUpDebugWindow()
 	}
 }
 
-void tearDownDebugWindow()
+void
+tearDownDebugWindow()
 {
 	fclose(stdoutStream);
 	fclose(stderrStream);
 }
 
-void initDxgiFactory(ComPtr<IDXGIFactory>& out)
+void
+initDxgiFactory(ComPtr<IDXGIFactory>& out)
 {
 	hrThrowIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)out.GetAddressOf()));
 }
 
-void populateAdapterList(IDXGIFactory* factory, vector<ComPtr<IDXGIAdapter>>& out)
+void
+populateAdapterList(IDXGIFactory* factory, vector<ComPtr<IDXGIAdapter>>& out)
 {
 	uint i = 0;
 	while (true)
@@ -52,7 +56,8 @@ void populateAdapterList(IDXGIFactory* factory, vector<ComPtr<IDXGIAdapter>>& ou
 	}
 }
 
-void populateAdapterOutputList(IDXGIAdapter* adapter, vector<ComPtr<IDXGIOutput>>& out)
+void
+populateAdapterOutputList(IDXGIAdapter* adapter, vector<ComPtr<IDXGIOutput>>& out)
 {
 	uint i = 0;
 	while (true)
@@ -64,7 +69,8 @@ void populateAdapterOutputList(IDXGIAdapter* adapter, vector<ComPtr<IDXGIOutput>
 	}
 }
 
-void populateOutputDisplayModeList(IDXGIOutput* output, vector<DXGI_MODE_DESC>& out)
+void
+populateOutputDisplayModeList(IDXGIOutput* output, vector<DXGI_MODE_DESC>& out)
 {
 	UINT count = 0;
 	DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;

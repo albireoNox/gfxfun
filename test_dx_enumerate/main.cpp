@@ -14,7 +14,8 @@ using namespace std;
 
 static const wchar_t* TAB = L"  ";
 
-void logOutputDisplayModes(IDXGIOutput* output, wstring indent)
+void
+logOutputDisplayModes(IDXGIOutput* output, wstring indent)
 {
 	vector<DXGI_MODE_DESC> modes;
 	populateOutputDisplayModeList(output, modes);
@@ -28,7 +29,8 @@ void logOutputDisplayModes(IDXGIOutput* output, wstring indent)
 	}
 }
 
-void logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
+void
+logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 {
 	vector<ComPtr<IDXGIOutput>> outputs;
 	populateAdapterOutputList(adapter, outputs);
@@ -50,7 +52,8 @@ void logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 	}
 }
 
-void logAdapters(vector<ComPtr<IDXGIAdapter>>& adapters)
+void
+logAdapters(vector<ComPtr<IDXGIAdapter>>& adapters)
 {
 	cout << "Logging " << adapters.size() << " adapters." << endl;
 	for (uint i = 0; i < adapters.size(); i++)
@@ -69,7 +72,8 @@ void logAdapters(vector<ComPtr<IDXGIAdapter>>& adapters)
 	}
 }
 
-void run_main()
+void
+run_main()
 {
 	cout << "Hello!" << endl;
 	cout << endl;
@@ -83,7 +87,8 @@ void run_main()
 	cout << endl;
 }
 
-int main()
+int
+main()
 {	
 	run_main();
 

@@ -19,7 +19,8 @@ handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT
+Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
 	switch(msg)
@@ -32,7 +33,8 @@ LRESULT Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void Window::registerWindowClass()
+void
+Window::registerWindowClass()
 {
 	WNDCLASS wc;
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -52,7 +54,8 @@ void Window::registerWindowClass()
 	cout << "Registered window class." << endl;
 }
 
-void Window::createWindow()
+void
+Window::createWindow()
 {
 	RECT R = { 0, 0, this->clientWidth, this->clientHeight };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);

@@ -9,14 +9,16 @@
 
 using namespace std;
 
-void runMsgLoop()
+void
+runMsgLoop()
 {
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
 		DispatchMessage(&msg);
 }
 
-void run(HINSTANCE hInstance)
+void
+run(HINSTANCE hInstance)
 {
 	wstring name = L"This is a window";
 	Window window(name, 500, 500, hInstance);
@@ -26,7 +28,8 @@ void run(HINSTANCE hInstance)
 	runMsgLoop();
 }
 
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstace, LPSTR lpCmdLine, int nCmdShow)
+int CALLBACK
+WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstace, LPSTR lpCmdLine, int nCmdShow)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
