@@ -8,7 +8,7 @@ class Window
 {
 public:
 	// Initializes the window. May throw.
-	explicit Window(
+	Window(
 		const std::wstring& name,
 		uint clientWidth, 
 		uint clientHieght,
