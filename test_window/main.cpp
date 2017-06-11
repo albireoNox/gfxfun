@@ -1,11 +1,12 @@
-#include <lib/window.h>
+#include "lib/window.h"
+#include "lib/d3d_window.h"
+#include "lib/d3dSetup.h"
 #include <iostream> 
 
 // Enables detection of memory leaks (Debug only).
 #define _CRTDBG_MAP_ALLOC 
 #include <stdlib.h>
 #include <crtdbg.h>
-#include "lib/d3dSetup.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ void
 run(HINSTANCE hInstance)
 {
 	wstring name = L"This is a window";
-	Window window(name, 500, 500, hInstance);
+	D3DWindow window(name, 500, 500, hInstance);
 
 	wstring otherName = L"Other window";
 	Window otherWindow(otherName, 600, 100, hInstance);

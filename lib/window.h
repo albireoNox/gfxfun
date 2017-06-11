@@ -11,7 +11,7 @@ public:
 	Window(
 		const std::wstring& name,
 		uint clientWidth, 
-		uint clientHieght,
+		uint clientHeight,
 		HINSTANCE hInstance);
 
 	~Window();
@@ -22,10 +22,10 @@ protected:
 	Window(const Window& rhs) = delete;
 	Window& operator=(const Window& rhs) = delete;
 
-	void onResize(uint newClientWidth, uint newClientHeight);
-	void onCharInput(wchar_t);
-	void onMouseLClick(int x, int y);
-	void onClose();
+	virtual void onResize(uint newClientWidth, uint newClientHeight);
+	virtual void onCharInput(wchar_t);
+	virtual void onMouseLClick(int x, int y);
+	virtual void onClose();
 
 private:
 	void registerWindowClass();

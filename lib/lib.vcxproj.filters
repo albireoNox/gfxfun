@@ -30,12 +30,18 @@
     <ClInclude Include="msg_debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="d3d_window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3dSetup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
