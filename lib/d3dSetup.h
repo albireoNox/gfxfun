@@ -4,6 +4,7 @@
 #include <dxgi.h>
 #include <wrl.h>
 #include <vector>
+#include <d3d12.h>
 
 inline HRESULT
 hrThrowIfFailed(HRESULT hr)
@@ -30,3 +31,6 @@ getAdapterOutputList(IDXGIAdapter*);
 
 std::vector<DXGI_MODE_DESC>
 getOutputDisplayModeList(IDXGIOutput*);
+
+Microsoft::WRL::ComPtr<ID3D12Device>
+getDevice(IDXGIAdapter*);

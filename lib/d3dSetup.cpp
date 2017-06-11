@@ -89,3 +89,15 @@ getOutputDisplayModeList(IDXGIOutput* output)
 		hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, &out[0]));
 	return out;
 }
+
+Microsoft::WRL::ComPtr<ID3D12Device>
+getDevice(IDXGIAdapter* adapter)
+{
+	ComPtr<ID3D12Device> device;
+	hrThrowIfFailed(D3D12CreateDevice(
+		adapter,
+		D3D_FEATURE_LEVEL_11_0,
+		_uuidof(ID3D12Device),
+		(void**)device.GetAddressOf()));
+	return device;
+}
