@@ -17,8 +17,7 @@ static const wchar_t* TAB = L"  ";
 void
 logOutputDisplayModes(IDXGIOutput* output, wstring indent)
 {
-	vector<DXGI_MODE_DESC> modes;
-	populateOutputDisplayModeList(output, modes);
+	vector<DXGI_MODE_DESC> modes = getOutputDisplayModeList(output);
 
 	for (uint i = 0; i < modes.size(); i++)
 	{
@@ -32,8 +31,7 @@ logOutputDisplayModes(IDXGIOutput* output, wstring indent)
 void
 logAdapterOutputs(IDXGIAdapter* adapter, wstring indent)
 {
-	vector<ComPtr<IDXGIOutput>> outputs;
-	populateAdapterOutputList(adapter, outputs);
+	vector<ComPtr<IDXGIOutput>> outputs = getAdapterOutputList(adapter);
 	for (uint i = 0; i < outputs.size(); i++)
 	{
 		wcout << indent << "* Output " << i << " *" << endl;
@@ -78,10 +76,8 @@ run_main()
 	cout << "Hello!" << endl;
 	cout << endl;
 
-	ComPtr<IDXGIFactory> factory;
-	initDxgiFactory(factory);
-	vector<ComPtr<IDXGIAdapter>> adapters;
-	populateAdapterList(factory.Get(), adapters);
+	ComPtr<IDXGIFactory> factory = getDxgiFactory();
+	vector<ComPtr<IDXGIAdapter>> adapters = getAdapterList(factory.Get());
 
 	logAdapters(adapters);
 	cout << endl;

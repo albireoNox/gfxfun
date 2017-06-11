@@ -37,15 +37,18 @@ tearDownDebugWindow()
 	fclose(stderrStream);
 }
 
-void
-initDxgiFactory(ComPtr<IDXGIFactory>& out)
+ComPtr<IDXGIFactory>
+getDxgiFactory()
 {
+	ComPtr<IDXGIFactory> out;
 	hrThrowIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)out.GetAddressOf()));
+	return out;
 }
 
-void
-populateAdapterList(IDXGIFactory* factory, vector<ComPtr<IDXGIAdapter>>& out)
+vector<ComPtr<IDXGIAdapter>>
+getAdapterList(IDXGIFactory* factory)
 {
+	vector<ComPtr<IDXGIAdapter>> out;
 	uint i = 0;
 	while (true)
 	{
@@ -54,11 +57,13 @@ populateAdapterList(IDXGIFactory* factory, vector<ComPtr<IDXGIAdapter>>& out)
 			break;
 		out.push_back(adapter);
 	}
+	return out;
 }
 
-void
-populateAdapterOutputList(IDXGIAdapter* adapter, vector<ComPtr<IDXGIOutput>>& out)
+vector<ComPtr<IDXGIOutput>>
+getAdapterOutputList(IDXGIAdapter* adapter)
 {
+	vector<ComPtr<IDXGIOutput>> out;
 	uint i = 0;
 	while (true)
 	{
@@ -67,18 +72,20 @@ populateAdapterOutputList(IDXGIAdapter* adapter, vector<ComPtr<IDXGIOutput>>& ou
 			break;
 		out.push_back(output);
 	}
+	return out;
 }
 
-void
-populateOutputDisplayModeList(IDXGIOutput* output, vector<DXGI_MODE_DESC>& out)
+vector<DXGI_MODE_DESC>
+getOutputDisplayModeList(IDXGIOutput* output)
 {
 	UINT count = 0;
 	DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	UINT flags = DXGI_ENUM_MODES_INTERLACED;
+	vector<DXGI_MODE_DESC> out;
 
 	hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, nullptr));
 	out.resize(count);
-	if (count == 0)
-		return;
-	hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, &out[0]));
+	if (count > 0)
+		hrThrowIfFailed(output->GetDisplayModeList(format, flags, &count, &out[0]));
+	return out;
 }
