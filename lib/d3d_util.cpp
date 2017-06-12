@@ -41,7 +41,7 @@ ComPtr<IDXGIFactory>
 getDxgiFactory()
 {
 	ComPtr<IDXGIFactory> out;
-	hrThrowIfFailed(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)out.GetAddressOf()));
+	hrThrowIfFailed(CreateDXGIFactory(IID_PPV_ARGS(out.GetAddressOf())));
 	return out;
 }
 
@@ -97,7 +97,6 @@ getDevice(IDXGIAdapter* adapter)
 	hrThrowIfFailed(D3D12CreateDevice(
 		adapter,
 		D3D_FEATURE_LEVEL_11_0,
-		_uuidof(ID3D12Device),
-		(void**)device.GetAddressOf()));
+		IID_PPV_ARGS(device.GetAddressOf())));
 	return device;
 }
