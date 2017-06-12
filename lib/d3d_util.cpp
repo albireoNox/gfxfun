@@ -37,10 +37,10 @@ tearDownDebugWindow()
 	fclose(stderrStream);
 }
 
-ComPtr<IDXGIFactory>
+ComPtr<IDXGIFactory4>
 getDxgiFactory()
 {
-	ComPtr<IDXGIFactory> out;
+	ComPtr<IDXGIFactory4> out;
 	hrThrowIfFailed(CreateDXGIFactory(IID_PPV_ARGS(out.GetAddressOf())));
 	return out;
 }

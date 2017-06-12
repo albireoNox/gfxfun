@@ -5,6 +5,7 @@
 #include <wrl.h>
 #include <vector>
 #include <d3d12.h>
+#include <DXGI1_4.h>
 
 inline HRESULT
 hrThrowIfFailed(HRESULT hr)
@@ -20,7 +21,7 @@ setUpDebugWindow();
 void
 tearDownDebugWindow();
 
-Microsoft::WRL::ComPtr<IDXGIFactory>
+Microsoft::WRL::ComPtr<IDXGIFactory4>
 getDxgiFactory();
 
 std::vector<Microsoft::WRL::ComPtr<IDXGIAdapter>>
