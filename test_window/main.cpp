@@ -1,6 +1,6 @@
 #include "lib/window.h"
 #include "lib/d3d_window.h"
-#include "lib/d3dSetup.h"
+#include "lib/d3d_util.h"
 #include <iostream> 
 
 // Enables detection of memory leaks (Debug only).

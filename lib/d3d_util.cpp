@@ -1,4 +1,4 @@
-#include "d3dSetup.h"
+#include "d3d_util.h"
 
 #include "common.h"
 #include <vector>
@@ -90,7 +90,7 @@ getOutputDisplayModeList(IDXGIOutput* output)
 	return out;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Device>
+ComPtr<ID3D12Device>
 getDevice(IDXGIAdapter* adapter)
 {
 	ComPtr<ID3D12Device> device;

@@ -20,14 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
-    <ClInclude Include="d3dSetup.h" />
+    <ClInclude Include="d3d_util.h" />
     <ClInclude Include="d3d_window.h" />
     <ClInclude Include="msg_debug.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="d3dSetup.cpp" />
+    <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="d3d_window.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
