@@ -57,14 +57,7 @@ logMultisampleQualityLevels(ComPtr<IDXGIAdapter> adapter, wstring indent)
 	ComPtr<ID3D12Device> device = getDevice(adapter.Get());
 	wcout << indent << "Supported multisample sample counts: ";
 	for (uint sampleCount = 1; sampleCount <= D3D12_MAX_MULTISAMPLE_SAMPLE_COUNT; sampleCount++) {
-		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
-		qualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		qualityLevels.SampleCount = sampleCount;
-		qualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-		qualityLevels.NumQualityLevels = 0;
-		hrThrowIfFailed(device.Get()->CheckFeatureSupport(
-			D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &qualityLevels, sizeof(qualityLevels)));
-		if (qualityLevels.NumQualityLevels > 0)
+		if (getMSAAQualityLevels(device.Get(), sampleCount) > 0)
 			wcout << sampleCount << " ";
 	}
 	wcout << endl;
