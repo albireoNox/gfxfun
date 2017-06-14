@@ -25,13 +25,18 @@ public:
 
 	~D3DWindow();
 
+	virtual void draw();
+
 protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCurrentBackBufferView() const;
 	D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilView() const;
 
 	void onResize(uint newClientWidth, uint newClientHieght) override;
+	void presentAndAdvanceSwapchain();
 
 private:
+	void initializeRenderTarget();
+	void initializeDepthStencilBuffer();
 	void createSwapChain();
 	void createDescriptorHeaps();
 	void flushCommandQueue();

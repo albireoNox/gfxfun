@@ -6,6 +6,7 @@
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
+using namespace std;
 
 void
 D3DWindow::flushCommandQueue()
@@ -34,19 +35,8 @@ D3DWindow::flushCommandQueue()
 }
 
 void
-D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
+D3DWindow::initializeRenderTarget()
 {
-	__super::onResize(newClientWidth, newClientHeight);
-
-//	assert(md3dDevice);
-//	assert(mSwapChain);
-//	assert(mDirectCmdListAlloc);
-
-	// Flush before changing any resources.
-	this->flushCommandQueue();
-
-	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
-
 	// Release the previous resources we will be recreating.
 	for (int i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; ++i)
 		this->swapChainBuffer[i].Reset();
@@ -55,8 +45,8 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 	// Resize the swap chain.
 	hrThrowIfFailed(this->swapChain->ResizeBuffers(
 		D3DWindow::SWAPCHAIN_BUFFER_COUNT,
-		newClientWidth,
-		newClientHeight,
+		this->clientWidth,
+		this->clientHeight,
 		D3DWindow::BACK_BUFFER_FORMAT,
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
@@ -77,7 +67,11 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 
 		rtvHeapHandle.Offset(1, this->rtvDescriptorSize);
 	}
+}
 
+void
+D3DWindow::initializeDepthStencilBuffer()
+{
 	// Create Depth/Stencil Buffer and View
 	D3D12_RESOURCE_DESC depthStencilDesc;
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -115,16 +109,50 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 			this->depthStencilBuffer.Get(),
 			D3D12_RESOURCE_STATE_COMMON,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE));
+}
 
-	// Execute the resize commands.
+void
+D3DWindow::presentAndAdvanceSwapchain()
+{
+	hrThrowIfFailed(this->swapChain->Present(0, 0));
+	this->currentBackBuffer = 
+		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
+}
+
+void
+D3DWindow::draw()
+{
+	wcout << "DRAWING " << this->name << endl;
+
+	this->presentAndAdvanceSwapchain();
+}
+
+void
+D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
+{
+	__super::onResize(newClientWidth, newClientHeight);
+
+	assert(this->device);
+	assert(this->swapChain);
+	assert(this->cmdAllocator);
+
+	// Flush before changing any resources.
+	this->flushCommandQueue();
+
+	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
+
+	this->initializeRenderTarget();
+	this->initializeDepthStencilBuffer();
+
 	hrThrowIfFailed(this->cmdList->Close());
 	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
 	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
+	// TODO maybe we don't want this here.
+	this->draw();
+
 	// Wait until resize is complete.
 	this->flushCommandQueue();
-
-	hrThrowIfFailed(this->swapChain->Present(0, 0));
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE
