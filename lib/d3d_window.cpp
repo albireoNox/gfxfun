@@ -13,6 +13,58 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
+D3DRenderTarget::D3DRenderTarget(
+	ID3D12Device* device, 
+	ID3D11On12Device* d3d11On12Device,
+	ID2D1Device2 *d2dDevice,
+	IDXGISwapChain* swapchain, 
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle, 
+	uint bufferIndex,
+	uint dpiX,
+	uint dpiY)
+{
+	// Get resource 
+	hrThrowIfFailed(swapchain->GetBuffer(
+		bufferIndex, IID_PPV_ARGS(this->swapChainBuffer.GetAddressOf())));
+
+	// Create descriptor
+	device->CreateRenderTargetView(
+		this->swapChainBuffer.Get(), nullptr, rtvHeapHandle);
+
+	// D2D
+	D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+
+	hrThrowIfFailed(d3d11On12Device->CreateWrappedResource(
+		this->swapChainBuffer.Get(),
+		&d3d11Flags,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT,
+		IID_PPV_ARGS(this->wrappedSwapChainBuffer.GetAddressOf())));
+
+	hrThrowIfFailed(this->wrappedSwapChainBuffer.As(&this->d2dSurface));
+
+	D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+		dpiX,
+		dpiY);
+
+	hrThrowIfFailed(
+		d2dDevice->CreateDeviceContext(
+			D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+			d2dDeviceContext.GetAddressOf()));
+
+	hrThrowIfFailed(this->d2dDeviceContext->CreateBitmapFromDxgiSurface(
+		this->d2dSurface.Get(),
+		&bitmapProperties,
+		this->d2dRenderTarget.GetAddressOf()));
+}
+
+D3DRenderTarget::~D3DRenderTarget()
+{
+	// Use default destructors.
+}
+
 void enableDebugLayer()
 {
 #if defined(DEGUG) || defined(_DEBUG)
@@ -22,7 +74,7 @@ void enableDebugLayer()
 #endif
 }
 
-D3DWindow::D3DWindow(const std::wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
+D3DWindow::D3DWindow(const wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
 	Window(name, clientWidth, clientHeight, hInstance)
 {
 	enableDebugLayer();
@@ -65,14 +117,17 @@ D3DWindow::draw()
 	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
 	wstring text = L"11On12";
 
-	d3d11On12Device->AcquireWrappedResources(
-		this->wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
+	D3DRenderTarget renderTarget = this->currentRenderTarget();
 
-	this->d2dDeviceContext->SetTarget(this->d2dRenderTargets[this->currentBackBuffer].Get());
-	this->d2dDeviceContext->BeginDraw();
-	this->d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+	d3d11On12Device->AcquireWrappedResources(
+		renderTarget.wrappedSwapChainBuffer.GetAddressOf(), 1);
+
+	renderTarget.d2dDeviceContext->SetTarget(
+		renderTarget.d2dRenderTarget.Get());
+	renderTarget.d2dDeviceContext->BeginDraw();
+	renderTarget.d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
 	ID2D1SolidColorBrush *brush;
-	hrThrowIfFailed(this->d2dDeviceContext->CreateSolidColorBrush(
+	hrThrowIfFailed(renderTarget.d2dDeviceContext->CreateSolidColorBrush(
 		D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
 		&brush));
 
@@ -97,19 +152,19 @@ D3DWindow::draw()
 	txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-	this->d2dDeviceContext->DrawTextW(
+	renderTarget.d2dDeviceContext->DrawTextW(
 		text.c_str(),
 		text.size(),
 		txtFmt,
 		&textRect,
 		brush);
 
-	hrThrowIfFailed(this->d2dDeviceContext->EndDraw());
+	hrThrowIfFailed(renderTarget.d2dDeviceContext->EndDraw());
 
 	this->d3d11On12Device->ReleaseWrappedResources(
-		wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
+		renderTarget.wrappedSwapChainBuffer.GetAddressOf(), 1);
 
-	d2dDeviceContext->Flush();
+	renderTarget.d2dDeviceContext->Flush();
 	d3dDeviceContext->Flush();
 	this->flush();
 
@@ -129,6 +184,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE
 D3DWindow::getDepthStencilView() const
 {
 	return this->dsvHeap->GetCPUDescriptorHandleForHeapStart();
+}
+
+D3DRenderTarget&
+D3DWindow::currentRenderTarget()
+{
+	return this->renderTargets[this->currentBackBuffer];
 }
 
 void
@@ -173,15 +234,7 @@ void
 D3DWindow::clearRenderTargets()
 {
 	// Release the previous resources we will be recreating.
-	for (int i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; ++i) {
-		this->swapChainBuffer[i].Reset();
-		this->wrappedSwapChainBuffer[i].Reset();
-		this->d2dSurfaces[i].Reset();
-		this->d2dRenderTargets[i].Reset();
-	}
-	this->depthStencilBuffer.Reset();
-	this->d2dDeviceContext.Reset();
-
+	this->renderTargets.clear();
 	this->d3dDeviceContext->Flush();
 }
 
@@ -198,46 +251,20 @@ D3DWindow::initializeRenderTargets()
 
 	this->currentBackBuffer = 0;
 
-	hrThrowIfFailed(
-		this->d2dDevice->CreateDeviceContext(
-			D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-			d2dDeviceContext.GetAddressOf()));
-
 	// Create Render Target View
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(
 		this->rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (uint i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; i++)
 	{
-		// Get resource 
-		hrThrowIfFailed(this->swapChain->GetBuffer(
-			i, IID_PPV_ARGS(this->swapChainBuffer[i].GetAddressOf())));
-
-		// Create descriptor
-		this->device->CreateRenderTargetView(
-			this->swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-
-		// D2D
-		D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
-
-		hrThrowIfFailed(this->d3d11On12Device->CreateWrappedResource(
-			this->swapChainBuffer[this->currentBackBuffer].Get(),
-			&d3d11Flags,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT,
-			IID_PPV_ARGS(this->wrappedSwapChainBuffer[i].GetAddressOf())));
-
-		hrThrowIfFailed(this->wrappedSwapChainBuffer[i].As(&this->d2dSurfaces[i]));
-
-		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
-			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+		this->renderTargets.push_back(D3DRenderTarget(
+			this->device.Get(),
+			this->d3d11On12Device.Get(),
+			this->d2dDevice.Get(),
+			this->swapChain.Get(),
+			rtvHeapHandle,
+			i,
 			this->dpiX,
-			this->dpiY);
-
-		hrThrowIfFailed(this->d2dDeviceContext->CreateBitmapFromDxgiSurface(
-			this->d2dSurfaces[i].Get(),
-			&bitmapProperties,
-			this->d2dRenderTargets[i].GetAddressOf()));
+			this->dpiY));
 
 		rtvHeapHandle.Offset(1, this->rtvDescriptorSize);
 	}

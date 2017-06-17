@@ -8,6 +8,34 @@
 #include <d3d11On12.h>
 #include <d2d1_1.h>
 #include <d2d1_3.h>
+#include <vector>
+
+/**
+* Render Targets for D3D and D2D. There should be one per swap
+* chain buffer. Shares lifetime with application, but must be
+* recreated when the window size changes.
+*/
+class D3DRenderTarget
+{
+public:
+
+	D3DRenderTarget(
+		ID3D12Device*,
+		ID3D11On12Device*,
+		ID2D1Device2*,
+		IDXGISwapChain*,
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle,
+		uint bufferIndex,
+		uint dpiX,
+		uint dpiY);
+	~D3DRenderTarget();
+
+	Microsoft::WRL::ComPtr<ID3D12Resource>      swapChainBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Resource>      wrappedSwapChainBuffer;
+	Microsoft::WRL::ComPtr<IDXGISurface>        d2dSurface;
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1>        d2dRenderTarget;
+	Microsoft::WRL::ComPtr<ID2D1DeviceContext>  d2dDeviceContext;
+};
 
 class D3DWindow : public Window
 {
@@ -35,6 +63,7 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCurrentBackBufferView() const;
 	D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilView() const;
 
+	D3DRenderTarget& currentRenderTarget();
 	void onResize(uint newClientWidth, uint newClientHieght) override;
 	void presentAndAdvanceSwapchain();
 
@@ -64,8 +93,8 @@ private:
 	// Render Target View
 	uint                                         rtvDescriptorSize;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	Microsoft::WRL::ComPtr<ID3D12Resource>       swapChainBuffer[SWAPCHAIN_BUFFER_COUNT];
-	uint currentBackBuffer;
+	uint                                         currentBackBuffer;
+	std::vector<D3DRenderTarget>                 renderTargets;
 
 	// Depth/Stencil View
 	uint                                         dsvDescriptorSize;
@@ -75,11 +104,7 @@ private:
 	uint cbvSrvDescriptorSize;
 
 	// D2D Stuff
-	Microsoft::WRL::ComPtr<ID3D11Resource>      wrappedSwapChainBuffer[SWAPCHAIN_BUFFER_COUNT];
-	Microsoft::WRL::ComPtr<IDXGISurface>        d2dSurfaces[SWAPCHAIN_BUFFER_COUNT];
-	Microsoft::WRL::ComPtr<ID2D1Bitmap1>        d2dRenderTargets[SWAPCHAIN_BUFFER_COUNT];
 	Microsoft::WRL::ComPtr<ID3D11Device>        d3d11Device;
-	Microsoft::WRL::ComPtr<ID2D1DeviceContext>  d2dDeviceContext;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dDeviceContext;
 	Microsoft::WRL::ComPtr<ID3D11On12Device>    d3d11On12Device;
 	Microsoft::WRL::ComPtr<ID2D1Device2>        d2dDevice;
