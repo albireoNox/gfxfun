@@ -3,6 +3,11 @@
 #include "d3d_util.h"
 #include "d3dx12.h"
 #include <d3d12.h>
+#include <d3d11On12.h>
+#include <d2d1.h>
+#include <d2d1_1.h>
+#include <d2d1_3.h>
+#include <dwrite.h>
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
@@ -112,6 +117,38 @@ D3DWindow::initializeDepthStencilBuffer()
 }
 
 void
+D3DWindow::initD2d()
+{
+	hrThrowIfFailed(D3D11On12CreateDevice(
+		this->device.Get(),
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+		nullptr,
+		0,
+		reinterpret_cast<IUnknown**>(this->cmdQueue.GetAddressOf()),
+		1,
+		0,
+		&this->d3d11Device,
+		&this->d3dDeviceContext,
+		nullptr));
+
+	hrThrowIfFailed(this->d3d11Device.As(&this->d3d11On12Device));
+
+	hrThrowIfFailed(
+		D2D1CreateFactory(
+			D2D1_FACTORY_TYPE_SINGLE_THREADED,
+			__uuidof(ID2D1Factory3),
+			nullptr,
+			&this->d2dFactory));
+	this->d2dFactory->GetDesktopDpi(&this->dpiX, &this->dpiY);
+
+	ComPtr<IDXGIDevice> dxgiDevice;
+	hrThrowIfFailed(this->d3d11On12Device.As(&dxgiDevice));
+
+	hrThrowIfFailed(
+		this->d2dFactory->CreateDevice(dxgiDevice.Get(), &this->d2dDevice));
+}
+
+void
 D3DWindow::presentAndAdvanceSwapchain()
 {
 	hrThrowIfFailed(this->swapChain->Present(0, 0));
@@ -123,6 +160,87 @@ void
 D3DWindow::draw()
 {
 	wcout << "DRAWING " << this->name << endl;
+
+	{
+		D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+
+		ComPtr<ID3D11Resource> wrappedSwapChainBuffer;
+		ComPtr<IDXGISurface> d2dSurface;
+		ComPtr<ID2D1Bitmap1> d2dRenderTarget;
+		ComPtr<ID2D1DeviceContext> d2dDeviceContext;
+
+		hrThrowIfFailed(
+			this->d2dDevice->CreateDeviceContext(
+				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+				d2dDeviceContext.GetAddressOf()));
+
+		hrThrowIfFailed(this->d3d11On12Device->CreateWrappedResource(
+			this->swapChainBuffer[this->currentBackBuffer].Get(),
+			&d3d11Flags,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT,
+			IID_PPV_ARGS(wrappedSwapChainBuffer.GetAddressOf())));
+
+		hrThrowIfFailed(wrappedSwapChainBuffer.As(&d2dSurface));
+
+		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+			this->dpiX,
+			this->dpiY);
+
+		hrThrowIfFailed(d2dDeviceContext->CreateBitmapFromDxgiSurface(
+			d2dSurface.Get(),
+			&bitmapProperties,
+			d2dRenderTarget.GetAddressOf()));
+
+		D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
+		static const WCHAR text[] = L"11On12";
+
+		d3d11On12Device->AcquireWrappedResources(wrappedSwapChainBuffer.GetAddressOf(), 1);
+
+		d2dDeviceContext->SetTarget(d2dRenderTarget.Get());
+		d2dDeviceContext->BeginDraw();
+		d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+		ID2D1SolidColorBrush *brush;
+		hrThrowIfFailed(d2dDeviceContext->CreateSolidColorBrush(
+			D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
+			&brush));
+
+		ComPtr<IDWriteFactory> writeFactory;
+		hrThrowIfFailed(DWriteCreateFactory(
+			DWRITE_FACTORY_TYPE_SHARED,
+			__uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
+		// Create a DirectWrite text format object.
+		IDWriteTextFormat *txtFmt;
+		hrThrowIfFailed(writeFactory->CreateTextFormat(
+			L"Verdana",
+			nullptr,
+			DWRITE_FONT_WEIGHT_NORMAL,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			50,
+			L"", //locale
+			&txtFmt));
+
+		// Center the text horizontally and vertically.
+		txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+		d2dDeviceContext->DrawTextW(
+			text,
+			_countof(text) - 1,
+			txtFmt,
+			&textRect,
+			brush);
+
+		hrThrowIfFailed(d2dDeviceContext->EndDraw());
+
+		d3d11On12Device->ReleaseWrappedResources(wrappedSwapChainBuffer.GetAddressOf(), 1);
+	}
+
+	d3dDeviceContext->Flush();
 
 	this->presentAndAdvanceSwapchain();
 }
@@ -231,6 +349,8 @@ void D3DWindow::createDescriptorHeaps()
 D3DWindow::D3DWindow(const std::wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
 	Window(name, clientWidth, clientHeight, hInstance)
 {
+	enableDebugLayer();
+
 	this->factory = getDxgiFactory();
 	this->device  = getDefaultDevice(this->factory.Get());
 	this->fence   = getFence(device.Get());
@@ -251,6 +371,7 @@ D3DWindow::D3DWindow(const std::wstring& name, uint clientWidth, uint clientHeig
 	this->cbvSrvDescriptorSize =
 		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	this->createDescriptorHeaps();
+	this->initD2d();
 
 	this->onResize(clientWidth, clientHeight);
 }

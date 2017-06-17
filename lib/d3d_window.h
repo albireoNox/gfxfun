@@ -4,6 +4,10 @@
 #include <d3d12.h>
 #include <DXGI1_4.h>
 #include <wrl/client.h>
+#include <d3d11.h>
+#include <d3d11On12.h>
+#include <d2d1_1.h>
+#include <d2d1_3.h>
 
 class D3DWindow : public Window
 {
@@ -14,7 +18,7 @@ public:
 	static const uint MSAA_QUALITY_LEVEL = 0;
 
 	DXGI_FORMAT DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	DXGI_FORMAT BACK_BUFFER_FORMAT   = DXGI_FORMAT_B8G8R8A8_UNORM;
+	DXGI_FORMAT BACK_BUFFER_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
 
 	// Initializes the window. May throw.
 	D3DWindow(
@@ -39,9 +43,12 @@ private:
 	void initializeDepthStencilBuffer();
 	void createSwapChain();
 	void createDescriptorHeaps();
+
+	void initD2d();
+
 	void flushCommandQueue();
 
-// State
+	// State
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory4>             factory;
 	Microsoft::WRL::ComPtr<ID3D12Device>              device;
@@ -56,14 +63,24 @@ private:
 
 	// Render Target View
 	uint                                         rtvDescriptorSize;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap; 
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12Resource>       swapChainBuffer[SWAPCHAIN_BUFFER_COUNT];
 	uint currentBackBuffer;
 
 	// Depth/Stencil View
 	uint                                         dsvDescriptorSize;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap; 
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap;
 	Microsoft::WRL::ComPtr<ID3D12Resource>       depthStencilBuffer;
 
 	uint cbvSrvDescriptorSize;
+
+	// D2D Stuff
+	Microsoft::WRL::ComPtr<ID3D11Device>        d3d11Device;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dDeviceContext;
+	Microsoft::WRL::ComPtr<ID3D11On12Device>    d3d11On12Device;
+	Microsoft::WRL::ComPtr<ID2D1Device2>        d2dDevice;
+	Microsoft::WRL::ComPtr<ID2D1Factory3>       d2dFactory;
+
+	float dpiX;
+	float dpiY;
 };
