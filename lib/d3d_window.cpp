@@ -14,7 +14,7 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 
 void
-D3DWindow::flushCommandQueue()
+D3DWindow::flush()
 {
 	// Advance the fence value to mark commands up to this fence point.
 	this->currentFence++;
@@ -39,8 +39,8 @@ D3DWindow::flushCommandQueue()
 	}
 }
 
-void
-D3DWindow::initializeRenderTargets()
+void 
+D3DWindow::clearRenderTargets()
 {
 	// Release the previous resources we will be recreating.
 	for (int i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; ++i) {
@@ -53,8 +53,11 @@ D3DWindow::initializeRenderTargets()
 	this->d2dDeviceContext.Reset();
 
 	this->d3dDeviceContext->Flush();
-	this->flushCommandQueue();
+}
 
+void
+D3DWindow::initializeRenderTargets()
+{
 	// Resize the swap chain.
 	hrThrowIfFailed(this->swapChain->ResizeBuffers(
 		D3DWindow::SWAPCHAIN_BUFFER_COUNT,
@@ -246,7 +249,7 @@ D3DWindow::draw()
 
 	d2dDeviceContext->Flush();
 	d3dDeviceContext->Flush();
-	this->flushCommandQueue();
+	this->flush();
 
 	this->presentAndAdvanceSwapchain();
 }
@@ -260,8 +263,10 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 	assert(this->swapChain);
 	assert(this->cmdAllocator);
 
+	this->clearRenderTargets();
+
 	// Flush before changing any resources.
-	this->flushCommandQueue();
+	this->flush();
 
 	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
 
@@ -276,7 +281,7 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 	this->draw();
 
 	// Wait until resize is complete.
-	this->flushCommandQueue();
+	this->flush();
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE

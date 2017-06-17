@@ -39,13 +39,14 @@ protected:
 	void presentAndAdvanceSwapchain();
 
 private:
+	void clearRenderTargets();
 	void initializeRenderTargets();
 	void initializeDepthStencilBuffer();
 	void createSwapChain();
 	void createDescriptorHeaps();
 	void initD2d();
 
-	void flushCommandQueue();
+	void flush();
 
 	// State
 private:
