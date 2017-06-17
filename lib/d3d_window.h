@@ -40,6 +40,9 @@ public:
 class D3DWindow : public Window
 {
 public:
+	virtual void draw() = 0;
+
+protected:
 	static const uint SWAPCHAIN_BUFFER_COUNT = 2;
 	// TODO parameterize these.
 	static const uint MSAA_SAMPLE_COUNT = 1;
@@ -57,15 +60,12 @@ public:
 
 	~D3DWindow();
 
-	virtual void draw();
-
-protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCurrentBackBufferView() const;
 	D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilView() const;
 
 	D3DRenderTarget& currentRenderTarget();
+	void onCreate() override;
 	void onResize(uint newClientWidth, uint newClientHieght) override;
-	void presentAndAdvanceSwapchain();
 
 private:
 	void clearRenderTargets();
@@ -75,10 +75,11 @@ private:
 	void createDescriptorHeaps();
 	void initD2d();
 
+	void render();
 	void flush();
 
 	// State
-private:
+protected:
 	Microsoft::WRL::ComPtr<IDXGIFactory4>             factory;
 	Microsoft::WRL::ComPtr<ID3D12Device>              device;
 

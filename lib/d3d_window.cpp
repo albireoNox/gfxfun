@@ -100,75 +100,11 @@ D3DWindow::D3DWindow(const wstring& name, uint clientWidth, uint clientHeight, H
 		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	this->createDescriptorHeaps();
 	this->initD2d();
-
-	this->onResize(clientWidth, clientHeight);
 }
 
 D3DWindow::~D3DWindow()
 {
 	// NOOP (for now)
-}
-
-void
-D3DWindow::draw()
-{
-	wcout << "DRAWING " << this->name << endl;
-
-	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
-	wstring text = L"11On12";
-
-	D3DRenderTarget renderTarget = this->currentRenderTarget();
-
-	d3d11On12Device->AcquireWrappedResources(
-		renderTarget.wrappedSwapChainBuffer.GetAddressOf(), 1);
-
-	renderTarget.d2dDeviceContext->SetTarget(
-		renderTarget.d2dRenderTarget.Get());
-	renderTarget.d2dDeviceContext->BeginDraw();
-	renderTarget.d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
-	ID2D1SolidColorBrush *brush;
-	hrThrowIfFailed(renderTarget.d2dDeviceContext->CreateSolidColorBrush(
-		D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
-		&brush));
-
-	ComPtr<IDWriteFactory> writeFactory;
-	hrThrowIfFailed(DWriteCreateFactory(
-		DWRITE_FACTORY_TYPE_SHARED,
-		__uuidof(IDWriteFactory),
-		reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
-	// Create a DirectWrite text format object.
-	IDWriteTextFormat *txtFmt;
-	hrThrowIfFailed(writeFactory->CreateTextFormat(
-		L"Verdana",
-		nullptr,
-		DWRITE_FONT_WEIGHT_NORMAL,
-		DWRITE_FONT_STYLE_NORMAL,
-		DWRITE_FONT_STRETCH_NORMAL,
-		50,
-		L"", //locale
-		&txtFmt));
-
-	// Center the text horizontally and vertically.
-	txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-	renderTarget.d2dDeviceContext->DrawTextW(
-		text.c_str(),
-		text.size(),
-		txtFmt,
-		&textRect,
-		brush);
-
-	hrThrowIfFailed(renderTarget.d2dDeviceContext->EndDraw());
-
-	this->d3d11On12Device->ReleaseWrappedResources(
-		renderTarget.wrappedSwapChainBuffer.GetAddressOf(), 1);
-
-	renderTarget.d2dDeviceContext->Flush();
-	d3dDeviceContext->Flush();
-	this->flush();
-
-	this->presentAndAdvanceSwapchain();
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE
@@ -190,6 +126,13 @@ D3DRenderTarget&
 D3DWindow::currentRenderTarget()
 {
 	return this->renderTargets[this->currentBackBuffer];
+}
+
+void
+D3DWindow::onCreate()
+{
+	__super::onCreate();
+	this->onResize(this->clientWidth, this->clientHeight);
 }
 
 void
@@ -215,16 +158,20 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
 	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// TODO maybe we don't want this here.
-	this->draw();
+	this->render();
 
 	// Wait until resize is complete.
 	this->flush();
 }
 
 void
-D3DWindow::presentAndAdvanceSwapchain()
+D3DWindow::render()
 {
+	this->draw();
+
+	this->d3dDeviceContext->Flush();
+	this->flush();
+
 	hrThrowIfFailed(this->swapChain->Present(0, 0));
 	this->currentBackBuffer =
 		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;

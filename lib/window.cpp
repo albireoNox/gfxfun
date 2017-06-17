@@ -23,9 +23,14 @@ handleMsgCb(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 LRESULT
 Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	//wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
+//	wcout << "msg:" << getMsgDebugString(msg) << " w:" << wParam << " l:" << lParam << endl;
 	switch(msg)
 	{
+	case WM_SHOWWINDOW:
+		this->onCreate();
+		UpdateWindow(this->windowHandle);
+		return 0;
+
 	case WM_CHAR:
 		this->onCharInput(static_cast<wchar_t>(wParam));
 		return 0;
@@ -46,6 +51,12 @@ Window::handleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	default:
 		return DefWindowProc(this->windowHandle, msg, wParam, lParam);
 	}
+}
+
+void 
+Window::onCreate()
+{
+	wcout << this->name << ": CREATE" << endl;
 }
 
 void
@@ -131,9 +142,6 @@ Window::createWindow()
 	if (GetLastError() != 0)
 		throw "Failed to bind window object.";
 
-	ShowWindow(this->windowHandle, SW_SHOW);
-	UpdateWindow(this->windowHandle);
-
 	Window::numOpenWindows++;
 }
 
@@ -142,6 +150,14 @@ Window::Window(const wstring& name, uint clientWidth, uint clientHeight, HINSTAN
 {
 	this->registerWindowClass();
 	this->createWindow();
+	cout << "CTOR DONE" << endl;
+}
+
+void
+Window::show()
+{
+	ShowWindow(this->windowHandle, SW_SHOW);
+	UpdateWindow(this->windowHandle);
 }
 
 Window::~Window()
