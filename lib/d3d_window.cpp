@@ -13,33 +13,163 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-void
-D3DWindow::flush()
+void enableDebugLayer()
 {
-	// Advance the fence value to mark commands up to this fence point.
-	this->currentFence++;
-
-	// Add an instruction to the command queue to set a new fence point.  Because we 
-	// are on the GPU timeline, the new fence point won't be set until the GPU finishes
-	// processing all the commands prior to this Signal().
-	hrThrowIfFailed(this->cmdQueue->Signal(this->fence.Get(), this->currentFence));
-
-	// Wait until the GPU has completed commands up to this fence point.
-	if (this->fence->GetCompletedValue() < this->currentFence)
-	{
-		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
-
-		// Fire event when GPU hits current fence.  
-		hrThrowIfFailed(
-			this->fence->SetEventOnCompletion(this->currentFence, eventHandle));
-
-		// Wait until the GPU hits current fence event is fired.
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
-	}
+#if defined(DEGUG) || defined(_DEBUG)
+	ComPtr<ID3D12Debug> debugController;
+	hrThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+	debugController->EnableDebugLayer();
+#endif
 }
 
-void 
+D3DWindow::D3DWindow(const std::wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
+	Window(name, clientWidth, clientHeight, hInstance)
+{
+	enableDebugLayer();
+
+	this->factory = getDxgiFactory();
+	this->device = getDefaultDevice(this->factory.Get());
+	this->fence = getFence(device.Get());
+
+	if (getMSAAQualityLevels(this->device.Get(), 4) == 0)
+		throw "4x MSAA Not Supported";
+
+	this->cmdQueue = getCommandQueue(this->device.Get());
+	this->cmdAllocator = getCommandAllocator(this->device.Get());
+	this->cmdList = getCommandList(this->device.Get(), this->cmdAllocator.Get());
+	this->createSwapChain();
+	this->currentBackBuffer = 0;
+
+	this->rtvDescriptorSize =
+		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	this->dsvDescriptorSize =
+		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	this->cbvSrvDescriptorSize =
+		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	this->createDescriptorHeaps();
+	this->initD2d();
+
+	this->onResize(clientWidth, clientHeight);
+}
+
+D3DWindow::~D3DWindow()
+{
+	// NOOP (for now)
+}
+
+void
+D3DWindow::draw()
+{
+	wcout << "DRAWING " << this->name << endl;
+
+	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
+	wstring text = L"11On12";
+
+	d3d11On12Device->AcquireWrappedResources(
+		this->wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
+
+	this->d2dDeviceContext->SetTarget(this->d2dRenderTargets[this->currentBackBuffer].Get());
+	this->d2dDeviceContext->BeginDraw();
+	this->d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+	ID2D1SolidColorBrush *brush;
+	hrThrowIfFailed(this->d2dDeviceContext->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
+		&brush));
+
+	ComPtr<IDWriteFactory> writeFactory;
+	hrThrowIfFailed(DWriteCreateFactory(
+		DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
+	// Create a DirectWrite text format object.
+	IDWriteTextFormat *txtFmt;
+	hrThrowIfFailed(writeFactory->CreateTextFormat(
+		L"Verdana",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		50,
+		L"", //locale
+		&txtFmt));
+
+	// Center the text horizontally and vertically.
+	txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+	this->d2dDeviceContext->DrawTextW(
+		text.c_str(),
+		text.size(),
+		txtFmt,
+		&textRect,
+		brush);
+
+	hrThrowIfFailed(this->d2dDeviceContext->EndDraw());
+
+	this->d3d11On12Device->ReleaseWrappedResources(
+		wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
+
+	d2dDeviceContext->Flush();
+	d3dDeviceContext->Flush();
+	this->flush();
+
+	this->presentAndAdvanceSwapchain();
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE
+D3DWindow::getCurrentBackBufferView() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		this->rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		this->currentBackBuffer,
+		this->rtvDescriptorSize);
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE
+D3DWindow::getDepthStencilView() const
+{
+	return this->dsvHeap->GetCPUDescriptorHandleForHeapStart();
+}
+
+void
+D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
+{
+	__super::onResize(newClientWidth, newClientHeight);
+
+	assert(this->device);
+	assert(this->swapChain);
+	assert(this->cmdAllocator);
+
+	this->clearRenderTargets();
+
+	// Flush before changing any resources.
+	this->flush();
+
+	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
+
+	this->initializeRenderTargets();
+	this->initializeDepthStencilBuffer();
+
+	hrThrowIfFailed(this->cmdList->Close());
+	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
+	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	// TODO maybe we don't want this here.
+	this->draw();
+
+	// Wait until resize is complete.
+	this->flush();
+}
+
+void
+D3DWindow::presentAndAdvanceSwapchain()
+{
+	hrThrowIfFailed(this->swapChain->Present(0, 0));
+	this->currentBackBuffer =
+		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
+}
+
+void
 D3DWindow::clearRenderTargets()
 {
 	// Release the previous resources we will be recreating.
@@ -156,6 +286,56 @@ D3DWindow::initializeDepthStencilBuffer()
 }
 
 void
+D3DWindow::createSwapChain()
+{
+	// Release the previous swapchain we will be recreating.
+	this->swapChain.Reset();
+
+	DXGI_SWAP_CHAIN_DESC sd;
+	sd.BufferDesc.Width = this->clientWidth;
+	sd.BufferDesc.Height = this->clientHeight;
+	sd.BufferDesc.RefreshRate.Numerator = 60;
+	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.BufferDesc.Format = D3DWindow::BACK_BUFFER_FORMAT;
+	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	sd.SampleDesc.Count = D3DWindow::MSAA_SAMPLE_COUNT;
+	sd.SampleDesc.Quality = D3DWindow::MSAA_QUALITY_LEVEL;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.BufferCount = D3DWindow::SWAPCHAIN_BUFFER_COUNT;
+	sd.OutputWindow = this->windowHandle;
+	sd.Windowed = true;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+	// Note: Swap chain uses queue to perform flush.
+	hrThrowIfFailed(this->factory->CreateSwapChain(
+		this->cmdQueue.Get(),
+		&sd,
+		this->swapChain.GetAddressOf()));
+}
+
+void
+D3DWindow::createDescriptorHeaps()
+{
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+	rtvHeapDesc.NumDescriptors = D3DWindow::SWAPCHAIN_BUFFER_COUNT;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	rtvHeapDesc.NodeMask = 0;
+	hrThrowIfFailed(this->device->CreateDescriptorHeap(
+		&rtvHeapDesc, IID_PPV_ARGS(this->rtvHeap.GetAddressOf())));
+
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	dsvHeapDesc.NodeMask = 0;
+	hrThrowIfFailed(this->device->CreateDescriptorHeap(
+		&dsvHeapDesc, IID_PPV_ARGS(this->dsvHeap.GetAddressOf())));
+}
+
+void
 D3DWindow::initD2d()
 {
 	hrThrowIfFailed(D3D11On12CreateDevice(
@@ -188,206 +368,27 @@ D3DWindow::initD2d()
 }
 
 void
-D3DWindow::presentAndAdvanceSwapchain()
+D3DWindow::flush()
 {
-	hrThrowIfFailed(this->swapChain->Present(0, 0));
-	this->currentBackBuffer = 
-		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
-}
+	// Advance the fence value to mark commands up to this fence point.
+	this->currentFence++;
 
-void
-D3DWindow::draw()
-{
-	wcout << "DRAWING " << this->name << endl;
+	// Add an instruction to the command queue to set a new fence point.  Because we 
+	// are on the GPU timeline, the new fence point won't be set until the GPU finishes
+	// processing all the commands prior to this Signal().
+	hrThrowIfFailed(this->cmdQueue->Signal(this->fence.Get(), this->currentFence));
 
-	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
-	wstring text = L"11On12";
+	// Wait until the GPU has completed commands up to this fence point.
+	if (this->fence->GetCompletedValue() < this->currentFence)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
 
-	d3d11On12Device->AcquireWrappedResources(
-		this->wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
+		// Fire event when GPU hits current fence.  
+		hrThrowIfFailed(
+			this->fence->SetEventOnCompletion(this->currentFence, eventHandle));
 
-	this->d2dDeviceContext->SetTarget(this->d2dRenderTargets[this->currentBackBuffer].Get());
-	this->d2dDeviceContext->BeginDraw();
-	this->d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
-	ID2D1SolidColorBrush *brush;
-	hrThrowIfFailed(this->d2dDeviceContext->CreateSolidColorBrush(
-		D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
-		&brush));
-
-	ComPtr<IDWriteFactory> writeFactory;
-	hrThrowIfFailed(DWriteCreateFactory(
-		DWRITE_FACTORY_TYPE_SHARED,
-		__uuidof(IDWriteFactory),
-		reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
-	// Create a DirectWrite text format object.
-	IDWriteTextFormat *txtFmt;
-	hrThrowIfFailed(writeFactory->CreateTextFormat(
-		L"Verdana",
-		nullptr,
-		DWRITE_FONT_WEIGHT_NORMAL,
-		DWRITE_FONT_STYLE_NORMAL,
-		DWRITE_FONT_STRETCH_NORMAL,
-		50,
-		L"", //locale
-		&txtFmt));
-
-	// Center the text horizontally and vertically.
-	txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-	this->d2dDeviceContext->DrawTextW(
-		text.c_str(),
-		text.size(),
-		txtFmt,
-		&textRect,
-		brush);
-
-	hrThrowIfFailed(this->d2dDeviceContext->EndDraw());
-
-	this->d3d11On12Device->ReleaseWrappedResources(
-		wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
-
-	d2dDeviceContext->Flush();
-	d3dDeviceContext->Flush();
-	this->flush();
-
-	this->presentAndAdvanceSwapchain();
-}
-
-void
-D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
-{
-	__super::onResize(newClientWidth, newClientHeight);
-
-	assert(this->device);
-	assert(this->swapChain);
-	assert(this->cmdAllocator);
-
-	this->clearRenderTargets();
-
-	// Flush before changing any resources.
-	this->flush();
-
-	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
-
-	this->initializeRenderTargets();
-	this->initializeDepthStencilBuffer();
-
-	hrThrowIfFailed(this->cmdList->Close());
-	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
-	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-	// TODO maybe we don't want this here.
-	this->draw();
-
-	// Wait until resize is complete.
-	this->flush();
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE
-D3DWindow::getCurrentBackBufferView() const
-{
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		this->rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		this->currentBackBuffer, 
-		this->rtvDescriptorSize);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE
-D3DWindow::getDepthStencilView() const
-{
-	return this->dsvHeap->GetCPUDescriptorHandleForHeapStart();
-}
-
-void enableDebugLayer()
-{
-#if defined(DEGUG) || defined(_DEBUG)
-	ComPtr<ID3D12Debug> debugController;
-	hrThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
-	debugController->EnableDebugLayer();
-#endif
-}
-
-void
-D3DWindow::createSwapChain()
-{
-	// Release the previous swapchain we will be recreating.
-	this->swapChain.Reset();
-
-	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = this->clientWidth;
-	sd.BufferDesc.Height = this->clientHeight;
-	sd.BufferDesc.RefreshRate.Numerator = 60;
-	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferDesc.Format = D3DWindow::BACK_BUFFER_FORMAT;
-	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	sd.SampleDesc.Count = D3DWindow::MSAA_SAMPLE_COUNT;
-	sd.SampleDesc.Quality = D3DWindow::MSAA_QUALITY_LEVEL;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount = D3DWindow::SWAPCHAIN_BUFFER_COUNT;
-	sd.OutputWindow = this->windowHandle;
-	sd.Windowed = true;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-	// Note: Swap chain uses queue to perform flush.
-	hrThrowIfFailed(this->factory->CreateSwapChain(
-		this->cmdQueue.Get(),
-		&sd,
-		this->swapChain.GetAddressOf()));
-}
-
-void D3DWindow::createDescriptorHeaps()
-{
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = D3DWindow::SWAPCHAIN_BUFFER_COUNT;
-	rtvHeapDesc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask       = 0;
-	hrThrowIfFailed(this->device->CreateDescriptorHeap(
-		&rtvHeapDesc, IID_PPV_ARGS(this->rtvHeap.GetAddressOf())));
-
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	dsvHeapDesc.NodeMask       = 0;
-	hrThrowIfFailed(this->device->CreateDescriptorHeap(
-		&dsvHeapDesc, IID_PPV_ARGS(this->dsvHeap.GetAddressOf())));
-}
-
-D3DWindow::D3DWindow(const std::wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
-	Window(name, clientWidth, clientHeight, hInstance)
-{
-	enableDebugLayer();
-
-	this->factory = getDxgiFactory();
-	this->device  = getDefaultDevice(this->factory.Get());
-	this->fence   = getFence(device.Get());
-
-	if (getMSAAQualityLevels(this->device.Get(), 4) == 0)
-		throw "4x MSAA Not Supported";
-
-	this->cmdQueue     = getCommandQueue(this->device.Get());
-	this->cmdAllocator = getCommandAllocator(this->device.Get());
-	this->cmdList      = getCommandList(this->device.Get(), this->cmdAllocator.Get());
-	this->createSwapChain();
-	this->currentBackBuffer = 0;
-
-	this->rtvDescriptorSize =
-		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	this->dsvDescriptorSize =
-		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	this->cbvSrvDescriptorSize =
-		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	this->createDescriptorHeaps();
-	this->initD2d();
-
-	this->onResize(clientWidth, clientHeight);
-}
-
-D3DWindow::~D3DWindow()
-{
-	// NOOP (for now)
+		// Wait until the GPU hits current fence event is fired.
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
 }
