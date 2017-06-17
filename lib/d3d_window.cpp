@@ -201,7 +201,7 @@ D3DWindow::draw()
 	wcout << "DRAWING " << this->name << endl;
 
 	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
-	static const WCHAR text[] = L"11On12";
+	wstring text = L"11On12";
 
 	d3d11On12Device->AcquireWrappedResources(
 		this->wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
@@ -236,8 +236,8 @@ D3DWindow::draw()
 	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
 	this->d2dDeviceContext->DrawTextW(
-		text,
-		_countof(text) - 1,
+		text.c_str(),
+		text.size(),
 		txtFmt,
 		&textRect,
 		brush);
