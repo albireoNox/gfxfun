@@ -39,11 +39,10 @@ protected:
 	void presentAndAdvanceSwapchain();
 
 private:
-	void initializeRenderTarget();
+	void initializeRenderTargets();
 	void initializeDepthStencilBuffer();
 	void createSwapChain();
 	void createDescriptorHeaps();
-
 	void initD2d();
 
 	void flushCommandQueue();
@@ -75,7 +74,11 @@ private:
 	uint cbvSrvDescriptorSize;
 
 	// D2D Stuff
+	Microsoft::WRL::ComPtr<ID3D11Resource>      wrappedSwapChainBuffer[SWAPCHAIN_BUFFER_COUNT];
+	Microsoft::WRL::ComPtr<IDXGISurface>        d2dSurfaces[SWAPCHAIN_BUFFER_COUNT];
+	Microsoft::WRL::ComPtr<ID2D1Bitmap1>        d2dRenderTargets[SWAPCHAIN_BUFFER_COUNT];
 	Microsoft::WRL::ComPtr<ID3D11Device>        d3d11Device;
+	Microsoft::WRL::ComPtr<ID2D1DeviceContext>  d2dDeviceContext;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dDeviceContext;
 	Microsoft::WRL::ComPtr<ID3D11On12Device>    d3d11On12Device;
 	Microsoft::WRL::ComPtr<ID2D1Device2>        d2dDevice;

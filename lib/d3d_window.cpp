@@ -40,12 +40,20 @@ D3DWindow::flushCommandQueue()
 }
 
 void
-D3DWindow::initializeRenderTarget()
+D3DWindow::initializeRenderTargets()
 {
 	// Release the previous resources we will be recreating.
-	for (int i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; ++i)
+	for (int i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; ++i) {
 		this->swapChainBuffer[i].Reset();
+		this->wrappedSwapChainBuffer[i].Reset();
+		this->d2dSurfaces[i].Reset();
+		this->d2dRenderTargets[i].Reset();
+	}
 	this->depthStencilBuffer.Reset();
+	this->d2dDeviceContext.Reset();
+
+	this->d3dDeviceContext->Flush();
+	this->flushCommandQueue();
 
 	// Resize the swap chain.
 	hrThrowIfFailed(this->swapChain->ResizeBuffers(
@@ -56,6 +64,11 @@ D3DWindow::initializeRenderTarget()
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
 	this->currentBackBuffer = 0;
+
+	hrThrowIfFailed(
+		this->d2dDevice->CreateDeviceContext(
+			D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+			d2dDeviceContext.GetAddressOf()));
 
 	// Create Render Target View
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(
@@ -69,6 +82,29 @@ D3DWindow::initializeRenderTarget()
 		// Create descriptor
 		this->device->CreateRenderTargetView(
 			this->swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
+
+		// D2D
+		D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+
+		hrThrowIfFailed(this->d3d11On12Device->CreateWrappedResource(
+			this->swapChainBuffer[this->currentBackBuffer].Get(),
+			&d3d11Flags,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT,
+			IID_PPV_ARGS(this->wrappedSwapChainBuffer[i].GetAddressOf())));
+
+		hrThrowIfFailed(this->wrappedSwapChainBuffer[i].As(&this->d2dSurfaces[i]));
+
+		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+			this->dpiX,
+			this->dpiY);
+
+		hrThrowIfFailed(this->d2dDeviceContext->CreateBitmapFromDxgiSurface(
+			this->d2dSurfaces[i].Get(),
+			&bitmapProperties,
+			this->d2dRenderTargets[i].GetAddressOf()));
 
 		rtvHeapHandle.Offset(1, this->rtvDescriptorSize);
 	}
@@ -161,86 +197,56 @@ D3DWindow::draw()
 {
 	wcout << "DRAWING " << this->name << endl;
 
-	{
-		D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+	D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
+	static const WCHAR text[] = L"11On12";
 
-		ComPtr<ID3D11Resource> wrappedSwapChainBuffer;
-		ComPtr<IDXGISurface> d2dSurface;
-		ComPtr<ID2D1Bitmap1> d2dRenderTarget;
-		ComPtr<ID2D1DeviceContext> d2dDeviceContext;
+	d3d11On12Device->AcquireWrappedResources(
+		this->wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
 
-		hrThrowIfFailed(
-			this->d2dDevice->CreateDeviceContext(
-				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-				d2dDeviceContext.GetAddressOf()));
+	this->d2dDeviceContext->SetTarget(this->d2dRenderTargets[this->currentBackBuffer].Get());
+	this->d2dDeviceContext->BeginDraw();
+	this->d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+	ID2D1SolidColorBrush *brush;
+	hrThrowIfFailed(this->d2dDeviceContext->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
+		&brush));
 
-		hrThrowIfFailed(this->d3d11On12Device->CreateWrappedResource(
-			this->swapChainBuffer[this->currentBackBuffer].Get(),
-			&d3d11Flags,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT,
-			IID_PPV_ARGS(wrappedSwapChainBuffer.GetAddressOf())));
+	ComPtr<IDWriteFactory> writeFactory;
+	hrThrowIfFailed(DWriteCreateFactory(
+		DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
+	// Create a DirectWrite text format object.
+	IDWriteTextFormat *txtFmt;
+	hrThrowIfFailed(writeFactory->CreateTextFormat(
+		L"Verdana",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		50,
+		L"", //locale
+		&txtFmt));
 
-		hrThrowIfFailed(wrappedSwapChainBuffer.As(&d2dSurface));
+	// Center the text horizontally and vertically.
+	txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
-			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
-			this->dpiX,
-			this->dpiY);
+	this->d2dDeviceContext->DrawTextW(
+		text,
+		_countof(text) - 1,
+		txtFmt,
+		&textRect,
+		brush);
 
-		hrThrowIfFailed(d2dDeviceContext->CreateBitmapFromDxgiSurface(
-			d2dSurface.Get(),
-			&bitmapProperties,
-			d2dRenderTarget.GetAddressOf()));
+	hrThrowIfFailed(this->d2dDeviceContext->EndDraw());
 
-		D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
-		static const WCHAR text[] = L"11On12";
+	this->d3d11On12Device->ReleaseWrappedResources(
+		wrappedSwapChainBuffer[this->currentBackBuffer].GetAddressOf(), 1);
 
-		d3d11On12Device->AcquireWrappedResources(wrappedSwapChainBuffer.GetAddressOf(), 1);
-
-		d2dDeviceContext->SetTarget(d2dRenderTarget.Get());
-		d2dDeviceContext->BeginDraw();
-		d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
-		ID2D1SolidColorBrush *brush;
-		hrThrowIfFailed(d2dDeviceContext->CreateSolidColorBrush(
-			D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
-			&brush));
-
-		ComPtr<IDWriteFactory> writeFactory;
-		hrThrowIfFailed(DWriteCreateFactory(
-			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown **>(writeFactory.GetAddressOf())));
-		// Create a DirectWrite text format object.
-		IDWriteTextFormat *txtFmt;
-		hrThrowIfFailed(writeFactory->CreateTextFormat(
-			L"Verdana",
-			nullptr,
-			DWRITE_FONT_WEIGHT_NORMAL,
-			DWRITE_FONT_STYLE_NORMAL,
-			DWRITE_FONT_STRETCH_NORMAL,
-			50,
-			L"", //locale
-			&txtFmt));
-
-		// Center the text horizontally and vertically.
-		txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-		txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-		d2dDeviceContext->DrawTextW(
-			text,
-			_countof(text) - 1,
-			txtFmt,
-			&textRect,
-			brush);
-
-		hrThrowIfFailed(d2dDeviceContext->EndDraw());
-
-		d3d11On12Device->ReleaseWrappedResources(wrappedSwapChainBuffer.GetAddressOf(), 1);
-	}
-
+	d2dDeviceContext->Flush();
 	d3dDeviceContext->Flush();
+	this->flushCommandQueue();
 
 	this->presentAndAdvanceSwapchain();
 }
@@ -259,7 +265,7 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 
 	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
 
-	this->initializeRenderTarget();
+	this->initializeRenderTargets();
 	this->initializeDepthStencilBuffer();
 
 	hrThrowIfFailed(this->cmdList->Close());
