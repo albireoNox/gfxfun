@@ -165,6 +165,16 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 }
 
 void
+D3DWindow::updateStats()
+{
+	wstring statsString =
+		this->name + L": "
+		+ L"frame: " + to_wstring(this->frameCount);
+
+	SetWindowText(this->windowHandle, statsString.c_str());
+}
+
+void
 D3DWindow::render()
 {
 	this->draw();
@@ -175,6 +185,9 @@ D3DWindow::render()
 	hrThrowIfFailed(this->swapChain->Present(0, 0));
 	this->currentBackBuffer =
 		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
+
+	this->updateStats();
+	this->frameCount++;
 }
 
 void

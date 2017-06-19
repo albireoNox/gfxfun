@@ -75,11 +75,14 @@ private:
 	void createDescriptorHeaps();
 	void initD2d();
 
+protected:
+	void updateStats();
 	void render();
 	void flush();
 
 	// State
-protected:
+	uint frameCount = 0;
+
 	Microsoft::WRL::ComPtr<IDXGIFactory4>             factory;
 	Microsoft::WRL::ComPtr<ID3D12Device>              device;
 

@@ -81,6 +81,14 @@ public:
 
 		renderTarget.d2dDeviceContext->Flush();
 	}
+
+	void
+	onCharInput(wchar_t ch) override
+	{
+		__super::onCharInput(ch);
+		if (ch == 'u')
+			this->render();
+	}
 };
 
 void
