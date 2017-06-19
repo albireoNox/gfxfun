@@ -27,7 +27,8 @@ public:
 		wcout << "DRAWING " << this->name << endl;
 
 		D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
-		wstring text = L"11On12";
+		wstring text = L"Draw to Buffer ";
+		text += this->currentBackBuffer == 0 ? L"0" : L"1";
 
 		D3DRenderTarget renderTarget = this->currentRenderTarget();
 
@@ -40,7 +41,7 @@ public:
 		renderTarget.d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
 		ID2D1SolidColorBrush *brush;
 		hrThrowIfFailed(renderTarget.d2dDeviceContext->CreateSolidColorBrush(
-			D2D1::ColorF(D2D1::ColorF::Red, 1.0f),
+			D2D1::ColorF(D2D1::ColorF::Orange, 1.0f),
 			&brush));
 
 		Microsoft::WRL::ComPtr<IDWriteFactory> writeFactory;
@@ -64,6 +65,8 @@ public:
 		txtFmt->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 		txtFmt->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
+		renderTarget.d2dDeviceContext->Clear(
+			D2D1::ColorF(D2D1::ColorF::DarkCyan, 1.0));
 		renderTarget.d2dDeviceContext->DrawTextW(
 			text.c_str(),
 			text.size(),
