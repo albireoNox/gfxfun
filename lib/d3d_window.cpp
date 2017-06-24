@@ -2,6 +2,7 @@
 
 #include "d3d_util.h"
 #include "d3dx12.h"
+#include <assert.h>
 #include <d3d12.h>
 #include <d3d11On12.h>
 #include <d2d1.h>
