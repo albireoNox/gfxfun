@@ -9,6 +9,7 @@
 #include <d2d1_1.h>
 #include <d2d1_3.h>
 #include <vector>
+#include "stopwatch.h"
 
 /**
 * Render Targets for D3D and D2D. There should be one per swap
@@ -81,7 +82,10 @@ protected:
 	void flush();
 
 	// State
-	uint frameCount = 0;
+	uint totalFramesRendered = 0;
+	uint framesRenderedThisSecond = 0;
+	Stopwatch fpsStatStopwatch;
+	double fps = 0.0;
 
 	Microsoft::WRL::ComPtr<IDXGIFactory4>             factory;
 	Microsoft::WRL::ComPtr<ID3D12Device>              device;

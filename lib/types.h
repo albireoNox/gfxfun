@@ -1,6 +1,7 @@
 #pragma once
 
 typedef unsigned int uint;
+typedef __int64      int64;
 
 // Some useful constants
 static const size_t KILOBYTE = 1024;

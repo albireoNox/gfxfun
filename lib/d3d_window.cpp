@@ -101,6 +101,8 @@ D3DWindow::D3DWindow(const wstring& name, uint clientWidth, uint clientHeight, H
 		this->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	this->createDescriptorHeaps();
 	this->initD2d();
+
+	this->fpsStatStopwatch.start();
 }
 
 D3DWindow::~D3DWindow()
@@ -168,9 +170,21 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 void
 D3DWindow::updateStats()
 {
+	this->totalFramesRendered++;
+	this->framesRenderedThisSecond++;
+
+	double fpsUpdateWindowSeconds = this->fpsStatStopwatch.elapsedSeconds();
+	if (fpsUpdateWindowSeconds >= 1.0)
+	{
+		this->fps = this->framesRenderedThisSecond / fpsUpdateWindowSeconds;
+		this->fpsStatStopwatch.reset();
+		this->framesRenderedThisSecond = 0;
+	}
+
 	wstring statsString =
 		this->name + L": "
-		+ L"frame: " + to_wstring(this->frameCount);
+		+ L"fps: "   + to_wstring(this->fps) + L" " +
+		+ L"frame: " + to_wstring(this->totalFramesRendered);
 
 	SetWindowText(this->windowHandle, statsString.c_str());
 }
@@ -188,7 +202,6 @@ D3DWindow::render()
 		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
 
 	this->updateStats();
-	this->frameCount++;
 }
 
 void
