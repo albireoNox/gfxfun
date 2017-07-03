@@ -24,8 +24,6 @@ public:
 	void
 	draw() override
 	{
-		wcout << "DRAWING " << this->name << endl;
-
 		D2D1_RECT_F textRect = D2D1::RectF(0, 0, this->clientWidth, this->clientHeight);
 		wstring text = L"Draw to Buffer ";
 		text += this->currentBackBuffer == 0 ? L"0" : L"1";
@@ -89,16 +87,27 @@ public:
 		if (ch == 'u')
 			this->render();
 	}
+
+	void
+	update()
+	{
+		this->render();
+	}
 };
 
 void
-runMsgLoop()
+runMsgLoop(D3DDemoWindow& window)
 {
-	MSG msg;
-	while (GetMessage(&msg, nullptr, 0, 0))
+	MSG msg = {0};
+
+	while (msg.message != WM_QUIT)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		} else {
+			window.update();
+		}
 	}
 }
 
@@ -113,7 +122,7 @@ run(HINSTANCE hInstance)
 	Window otherWindow(otherName, 600, 100, hInstance);
 	otherWindow.show();
 
-	runMsgLoop();
+	runMsgLoop(window);
 }
 
 int CALLBACK
