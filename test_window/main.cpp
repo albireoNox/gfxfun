@@ -81,14 +81,6 @@ public:
 	}
 
 	void
-	onCharInput(wchar_t ch) override
-	{
-		__super::onCharInput(ch);
-		if (ch == 'u')
-			this->render();
-	}
-
-	void
 	update()
 	{
 		this->render();
