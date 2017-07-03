@@ -197,7 +197,7 @@ D3DWindow::render()
 	this->d3dDeviceContext->Flush();
 	this->flush();
 
-	hrThrowIfFailed(this->swapChain->Present(0, 0));
+	hrThrowIfFailed(this->swapChain->Present(1, 0));
 	this->currentBackBuffer =
 		(this->currentBackBuffer + 1) % D3DWindow::SWAPCHAIN_BUFFER_COUNT;
 
