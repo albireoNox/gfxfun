@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_dx_enumerate", "test_d
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_window", "test_window\test_window.vcxproj", "{2DDBA619-C49A-4D14-9462-50393BBCB467}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_drawing_demo", "simple_drawing_demo\simple_drawing_demo.vcxproj", "{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{2DDBA619-C49A-4D14-9462-50393BBCB467}.Release|x64.Build.0 = Release|x64
 		{2DDBA619-C49A-4D14-9462-50393BBCB467}.Release|x86.ActiveCfg = Release|Win32
 		{2DDBA619-C49A-4D14-9462-50393BBCB467}.Release|x86.Build.0 = Release|Win32
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Debug|x64.ActiveCfg = Debug|x64
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Debug|x64.Build.0 = Debug|x64
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Debug|x86.ActiveCfg = Debug|Win32
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Debug|x86.Build.0 = Debug|Win32
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Release|x64.ActiveCfg = Release|x64
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Release|x64.Build.0 = Release|x64
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Release|x86.ActiveCfg = Release|Win32
+		{DB6FF7CA-5038-412B-A5A6-951C282F6CF8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

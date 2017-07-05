@@ -1,13 +1,12 @@
 #include "lib/window.h"
 #include "lib/d3d_window.h"
 #include "lib/d3d_util.h"
-#include <iostream> 
+#include <dwrite.h>
 
 // Enables detection of memory leaks (Debug only).
 #define _CRTDBG_MAP_ALLOC 
 #include <stdlib.h>
 #include <crtdbg.h>
-#include <dwrite.h>
 
 using namespace std;
 using Microsoft::WRL::ComPtr;
