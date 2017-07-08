@@ -59,3 +59,11 @@ getCommandList(ID3D12Device*, ID3D12CommandAllocator*);
 
 uint
 getMSAAQualityLevels(ID3D12Device*, uint sampleCount);
+
+Microsoft::WRL::ComPtr<ID3D12Resource>
+createDefaultBuffer(
+	ID3D12Device* device,
+	ID3D12GraphicsCommandList* cmdList,
+	const void* initData,
+	UINT64 bufferByteCount,
+	Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);

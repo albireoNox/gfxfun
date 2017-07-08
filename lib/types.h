@@ -1,7 +1,13 @@
 #pragma once
 
-typedef unsigned int uint;
-typedef __int64      int64;
+#include <cstdint>
+
+typedef unsigned int  uint;
+typedef std::uint16_t uint16;
+typedef std::uint32_t uint32;
+typedef std::uint64_t uint64;
+
+typedef __int64       int64;
 
 // Some useful constants
 static const size_t KILOBYTE = 1024;

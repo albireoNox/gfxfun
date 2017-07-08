@@ -23,6 +23,8 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="d3d_util.h" />
     <ClInclude Include="d3d_window.h" />
+    <ClInclude Include="geometry.h" />
+    <ClInclude Include="mesh.h" />
     <ClInclude Include="msg_debug.h" />
     <ClInclude Include="stopwatch.h" />
     <ClInclude Include="types.h" />
@@ -31,6 +33,7 @@
   <ItemGroup>
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="d3d_window.cpp" />
+    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="stopwatch.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
