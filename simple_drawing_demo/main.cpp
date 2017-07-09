@@ -1,5 +1,6 @@
 #include "lib/d3d_window.h"
 #include "lib/d3d_util.h"
+#include "box.h"
 #include <DirectXMath.h>
 #include <Windows.h>
 
@@ -21,13 +22,17 @@ public:
 
 protected:
 	void draw() override;
+
+	DemoBox boxMesh;
 };
 
 
 DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight, HINSTANCE hInstance) :
 	D3DWindow(name, clientWidth, clientHeight, hInstance)
 {
-	// NOOP
+	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
+
+	this->flush();
 }
 
 void
