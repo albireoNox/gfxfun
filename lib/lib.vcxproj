@@ -33,6 +33,7 @@
   <ItemGroup>
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="d3d_window.cpp" />
+    <ClCompile Include="geometry.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="stopwatch.cpp" />
     <ClCompile Include="window.cpp" />
