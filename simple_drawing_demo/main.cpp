@@ -8,6 +8,7 @@
 #define _CRTDBG_MAP_ALLOC 
 #include <stdlib.h>
 #include <crtdbg.h>
+#include <DirectXColors.h>
 
 using namespace std;
 using namespace DirectX;
@@ -44,7 +45,13 @@ DemoWindow::update()
 void
 DemoWindow::draw()
 {
+	this->cmdList->ClearRenderTargetView(
+		this->getCurrentBackBufferView(),
+		DirectX::Colors::DarkSlateGray,
+		0,
+		nullptr);
 
+	this->boxMesh.draw(this->cmdList.Get());
 }
 
 void

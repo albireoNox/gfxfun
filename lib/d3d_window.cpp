@@ -10,6 +10,7 @@
 #include <d2d1_3.h>
 #include <dwrite.h>
 #include <wrl/client.h>
+#include <DirectXColors.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -192,6 +193,10 @@ D3DWindow::updateStats()
 void
 D3DWindow::render()
 {
+	// Reset command list objects. 
+	hrThrowIfFailed(this->cmdAllocator->Reset());
+	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr /* TODO */));
+
 	this->cmdList->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
@@ -207,6 +212,13 @@ D3DWindow::render()
 		0,
 		nullptr);
 
+	this->cmdList->OMSetRenderTargets(
+		1,
+		&this->getCurrentBackBufferView(),
+		true,
+		&this->getDepthStencilView());
+
+	// Defer to subclass for specific drawing 
 	this->draw();
 
 	this->cmdList->ResourceBarrier(
@@ -216,6 +228,10 @@ D3DWindow::render()
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT));
 
+	// Execute command list
+	hrThrowIfFailed(this->cmdList->Close());
+	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
+	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	this->d3dDeviceContext->Flush();
 	this->flush();
