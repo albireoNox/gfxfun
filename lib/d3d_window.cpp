@@ -192,7 +192,22 @@ D3DWindow::updateStats()
 void
 D3DWindow::render()
 {
+	this->cmdList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			this->currentRenderTarget().swapChainBuffer.Get(),
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
 	this->draw();
+
+	this->cmdList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			this->currentRenderTarget().swapChainBuffer.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT));
+
 
 	this->d3dDeviceContext->Flush();
 	this->flush();
