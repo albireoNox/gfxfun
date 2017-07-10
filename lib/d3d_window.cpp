@@ -199,6 +199,14 @@ D3DWindow::render()
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	this->cmdList->ClearDepthStencilView(
+		this->getDepthStencilView(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+		1.0f,
+		0,
+		0,
+		nullptr);
+
 	this->draw();
 
 	this->cmdList->ResourceBarrier(
