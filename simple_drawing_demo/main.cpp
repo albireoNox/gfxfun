@@ -31,8 +31,8 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 	D3DWindow(name, clientWidth, clientHeight, hInstance)
 {
 	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
-
 	this->flush();
+	this->boxMesh.cleanUpLoadArtifacts();
 }
 
 void
