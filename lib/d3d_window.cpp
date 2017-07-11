@@ -9,8 +9,10 @@
 #include <d2d1_1.h>
 #include <d2d1_3.h>
 #include <dwrite.h>
+#include <sstream>
 #include <wrl/client.h>
 #include <DirectXColors.h>
+#include <iomanip>
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -181,13 +183,13 @@ D3DWindow::updateStats()
 		this->fpsStatStopwatch.reset();
 		this->framesRenderedThisSecond = 0;
 	}
+	wstringstream statsString;
+	statsString 
+		<< this->name << L": "
+		<< L"fps: "   << setprecision(1) << fixed << this->fps << L" "
+		<< L"frame: " << this->totalFramesRendered;
 
-	wstring statsString =
-		this->name + L": "
-		+ L"fps: "   + to_wstring(this->fps) + L" " +
-		+ L"frame: " + to_wstring(this->totalFramesRendered);
-
-	SetWindowText(this->windowHandle, statsString.c_str());
+	SetWindowText(this->windowHandle, statsString.str().c_str());
 }
 
 void
