@@ -13,6 +13,7 @@
 #include <wrl/client.h>
 #include <DirectXColors.h>
 #include <iomanip>
+#include "upload_buffer.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;

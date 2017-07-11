@@ -13,3 +13,13 @@ typedef __int64       int64;
 static const size_t KILOBYTE = 1024;
 static const size_t MEGABYTE = KILOBYTE * 1024;
 static const size_t GIGABYTE = MEGABYTE * 1024;
+
+class NON_COPYABLE
+{
+private:
+	NON_COPYABLE() = default;
+	~NON_COPYABLE() = default;
+
+	NON_COPYABLE(const NON_COPYABLE& rhs) = delete;
+	NON_COPYABLE& operator=(const NON_COPYABLE& rhs) = delete;
+};
