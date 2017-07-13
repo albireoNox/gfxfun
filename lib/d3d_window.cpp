@@ -25,8 +25,8 @@ D3DRenderTarget::D3DRenderTarget(
 	IDXGISwapChain* swapchain, 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle, 
 	uint bufferIndex,
-	uint dpiX,
-	uint dpiY)
+	float dpiX,
+	float dpiY)
 {
 	// Get resource 
 	hrThrowIfFailed(swapchain->GetBuffer(

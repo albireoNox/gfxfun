@@ -27,8 +27,8 @@ public:
 		IDXGISwapChain*,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle,
 		uint bufferIndex,
-		uint dpiX,
-		uint dpiY);
+		float dpiX,
+		float dpiY);
 	~D3DRenderTarget();
 
 	Microsoft::WRL::ComPtr<ID3D12Resource>      swapChainBuffer;
