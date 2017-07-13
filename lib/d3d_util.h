@@ -21,6 +21,14 @@ hrThrowIfFailed(HRESULT hr)
 	return hr;
 }
 
+inline HRESULT
+hrThrowIfFailed(HRESULT hr, Microsoft::WRL::ComPtr<ID3DBlob> errBlob)
+{
+	if (errBlob != nullptr)
+		std::cerr << (char*)errBlob->GetBufferPointer();
+	return hrThrowIfFailed(hr);
+}
+
 void
 setUpDebugWindow();
 

@@ -27,6 +27,7 @@ public:
 protected:
 	// TODO: UPLOAD BUFFER
 	void buildBufferForShaders();
+	void buildRootSignature();
 
 	void draw() override;
 
@@ -35,6 +36,7 @@ protected:
 	// TODO: UPLOAD BUFFER
 	unique_ptr<UploadBuffer<XMFLOAT4X4>> worldViewProjBuffer;
 	ComPtr<ID3D12DescriptorHeap> cbvHeap = nullptr;
+	ComPtr<ID3D12RootSignature> rootSignature = nullptr;
 
 };
 
@@ -44,6 +46,7 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 {
 	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
 	this->buildBufferForShaders();
+	this->buildRootSignature();
 
 	this->flush();
 	this->boxMesh.cleanUpLoadArtifacts();
@@ -76,6 +79,40 @@ DemoWindow::buildBufferForShaders()
 	this->device->CreateConstantBufferView(
 		&cbvDesc,
 		this->cbvHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void 
+DemoWindow::buildRootSignature()
+{
+	CD3DX12_ROOT_PARAMETER rootParam[1];
+
+	// Create a single descriptor table of CBVs.
+	CD3DX12_DESCRIPTOR_RANGE cbvTable;
+	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+	rootParam[0].InitAsDescriptorTable(1, &cbvTable);
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		1,
+		rootParam,
+		0,
+		nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	hrThrowIfFailed(
+		D3D12SerializeRootSignature(
+			&rootSigDesc,
+			D3D_ROOT_SIGNATURE_VERSION_1,
+			serializedRootSig.GetAddressOf(),
+			errorBlob.GetAddressOf()),
+		errorBlob);
+
+	hrThrowIfFailed(this->device->CreateRootSignature(
+		0,
+		serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(),
+		IID_PPV_ARGS(this->rootSignature.GetAddressOf())));
 }
 
 void
