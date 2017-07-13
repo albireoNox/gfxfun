@@ -29,6 +29,8 @@ protected:
 	void buildBufferForShaders();
 	void buildRootSignature();
 
+	void setUpRootSignatureForDraw(); // TODO figure out what to do with this. 
+
 	void draw() override;
 
 	DemoBox boxMesh;
@@ -116,6 +118,18 @@ DemoWindow::buildRootSignature()
 }
 
 void
+DemoWindow::setUpRootSignatureForDraw()
+{
+	ID3D12DescriptorHeap* descriptorHeaps[] = { this->cbvHeap.Get() };
+	this->cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	this->cmdList->SetGraphicsRootSignature(this->rootSignature.Get());
+
+	this->cmdList->SetGraphicsRootDescriptorTable(0, this->cbvHeap->GetGPUDescriptorHandleForHeapStart());
+}
+
+
+void
 DemoWindow::update()
 {
 	this->render();
@@ -129,6 +143,8 @@ DemoWindow::draw()
 		DirectX::Colors::DarkSlateGray,
 		0,
 		nullptr);
+
+	this->setUpRootSignatureForDraw();
 
 	this->boxMesh.draw(this->cmdList.Get());
 }
