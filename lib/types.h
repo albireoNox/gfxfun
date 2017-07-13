@@ -16,7 +16,7 @@ static const size_t GIGABYTE = MEGABYTE * 1024;
 
 class NON_COPYABLE
 {
-private:
+protected:
 	NON_COPYABLE() = default;
 	~NON_COPYABLE() = default;
 

@@ -9,10 +9,10 @@ public:
 	UploadBuffer(ID3D12Device* device, uint elementCount, bool isConstant) :
 		elementCount(elementCount), isConstant(isConstant)
 	{
-		// TODO element size
-		this->byteCountPerElement = sizeof(T);
+		// Make elements in constant buffers be 256-byte aligned.  
+		this->byteCountPerElement = isConstant ? (sizeof(T) + 255) & ~0xff : sizeof(T);
 
-		hrThrowIfFailed(device->CreateCommitedResource(
+		hrThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(this->byteCountPerElement * elementCount),

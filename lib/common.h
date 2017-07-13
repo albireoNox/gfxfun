@@ -1,6 +1,7 @@
 #pragma once
 
 // Common includes
+#include "d3dx12.h"
 #include "types.h"
 #include <Windows.h>
 #include <wrl/client.h>
