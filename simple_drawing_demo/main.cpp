@@ -12,6 +12,10 @@
 #include <lib/upload_buffer.h>
 #include <memory>
 
+// Shaders
+#include "VertexShader.h"
+#include "PixelShader.h"
+
 using namespace std;
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -28,9 +32,11 @@ protected:
 	// TODO: UPLOAD BUFFER
 	void buildBufferForShaders();
 	void buildRootSignature();
+	void buildPSO();
 
 	void setUpRootSignatureForDraw(); // TODO figure out what to do with this. 
 
+	ID3D12PipelineState* getPso() override;
 	void draw() override;
 
 	DemoBox boxMesh;
@@ -40,6 +46,7 @@ protected:
 	ComPtr<ID3D12DescriptorHeap> cbvHeap = nullptr;
 	ComPtr<ID3D12RootSignature> rootSignature = nullptr;
 
+	ComPtr<ID3D12PipelineState> pso = nullptr;
 };
 
 
@@ -49,6 +56,7 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
 	this->buildBufferForShaders();
 	this->buildRootSignature();
+	this->buildPSO();
 
 	this->flush();
 	this->boxMesh.cleanUpLoadArtifacts();
@@ -118,6 +126,29 @@ DemoWindow::buildRootSignature()
 }
 
 void
+DemoWindow::buildPSO()
+{
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	psoDesc.InputLayout = Vertex::LAYOUT_DESC;
+	psoDesc.pRootSignature = this->rootSignature.Get();
+	psoDesc.VS = { VS_BYTE_CODE, sizeof(VS_BYTE_CODE) };
+	psoDesc.PS = { PS_BYTE_CODE, sizeof(PS_BYTE_CODE) };
+	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = D3DWindow::BACK_BUFFER_FORMAT;
+	psoDesc.SampleDesc.Count = D3DWindow::MSAA_SAMPLE_COUNT;
+	psoDesc.SampleDesc.Quality = D3DWindow::MSAA_QUALITY_LEVEL;
+	psoDesc.DSVFormat = D3DWindow::DEPTH_STENCIL_FORMAT;
+	hrThrowIfFailed(this->device->CreateGraphicsPipelineState(
+		&psoDesc, IID_PPV_ARGS(this->pso.GetAddressOf())));
+}
+
+void
 DemoWindow::setUpRootSignatureForDraw()
 {
 	ID3D12DescriptorHeap* descriptorHeaps[] = { this->cbvHeap.Get() };
@@ -133,6 +164,12 @@ void
 DemoWindow::update()
 {
 	this->render();
+}
+
+ID3D12PipelineState*
+DemoWindow::getPso()
+{
+	return this->pso.Get();
 }
 
 void

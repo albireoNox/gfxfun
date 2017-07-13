@@ -13,7 +13,6 @@
 #include <wrl/client.h>
 #include <DirectXColors.h>
 #include <iomanip>
-#include "upload_buffer.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -198,7 +197,7 @@ D3DWindow::render()
 {
 	// Reset command list objects. 
 	hrThrowIfFailed(this->cmdAllocator->Reset());
-	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr /* TODO */));
+	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), this->getPso()));
 
 	this->cmdList->ResourceBarrier(
 		1,
@@ -434,4 +433,10 @@ D3DWindow::flush()
 		WaitForSingleObject(eventHandle, INFINITE);
 		CloseHandle(eventHandle);
 	}
+}
+
+ID3D12PipelineState*
+D3DWindow::getPso()
+{
+	return nullptr;
 }

@@ -81,6 +81,8 @@ protected:
 	void render();
 	void flush();
 
+	virtual ID3D12PipelineState* getPso();
+
 	// State
 	uint totalFramesRendered = 0;
 	uint framesRenderedThisSecond = 0;
