@@ -1,0 +1,2 @@
+<TODO: UPLOAD BUFFER>
+Move the upload buffer stuff into a utility class so it can be reused. Find some way to integrate with the window base class. 

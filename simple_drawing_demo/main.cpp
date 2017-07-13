@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <DirectXColors.h>
+#include <lib/upload_buffer.h>
+#include <memory>
 
 using namespace std;
 using namespace DirectX;
@@ -25,6 +27,7 @@ protected:
 	void draw() override;
 
 	DemoBox boxMesh;
+	unique_ptr<UploadBuffer<XMFLOAT4X4>> worldViewProj;
 };
 
 
@@ -32,6 +35,11 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 	D3DWindow(name, clientWidth, clientHeight, hInstance)
 {
 	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
+	
+	// TODO: UPLOAD BUFFER
+	this->worldViewProj = 
+		std::make_unique<UploadBuffer<XMFLOAT4X4>>(this->device.Get(), 1, true);
+	
 	this->flush();
 	this->boxMesh.cleanUpLoadArtifacts();
 }
