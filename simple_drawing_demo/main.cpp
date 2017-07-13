@@ -14,6 +14,7 @@
 
 using namespace std;
 using namespace DirectX;
+using Microsoft::WRL::ComPtr;
 
 /// DEMO WINDOW ///
 
@@ -24,10 +25,17 @@ public:
 	void update();
 
 protected:
+	// TODO: UPLOAD BUFFER
+	void buildBufferForShaders();
+
 	void draw() override;
 
 	DemoBox boxMesh;
-	unique_ptr<UploadBuffer<XMFLOAT4X4>> worldViewProj;
+
+	// TODO: UPLOAD BUFFER
+	unique_ptr<UploadBuffer<XMFLOAT4X4>> worldViewProjBuffer;
+	ComPtr<ID3D12DescriptorHeap> cbvHeap = nullptr;
+
 };
 
 
@@ -35,13 +43,39 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 	D3DWindow(name, clientWidth, clientHeight, hInstance)
 {
 	this->boxMesh.loadGeometry(this->device.Get(), this->cmdList.Get());
-	
-	// TODO: UPLOAD BUFFER
-	this->worldViewProj = 
-		std::make_unique<UploadBuffer<XMFLOAT4X4>>(this->device.Get(), 1, true);
-	
+	this->buildBufferForShaders();
+
 	this->flush();
 	this->boxMesh.cleanUpLoadArtifacts();
+}
+
+// TODO: UPLOAD BUFFER
+void
+DemoWindow::buildBufferForShaders()
+{
+	this->worldViewProjBuffer =
+		std::make_unique<UploadBuffer<XMFLOAT4X4>>(this->device.Get(), 1, true);
+	
+	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+	cbvHeapDesc.NumDescriptors = 1;
+	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	cbvHeapDesc.NodeMask = 0;
+	hrThrowIfFailed(this->device->CreateDescriptorHeap(
+		&cbvHeapDesc,
+		IID_PPV_ARGS(this->cbvHeap.GetAddressOf())));
+
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = worldViewProjBuffer->resource()->GetGPUVirtualAddress();
+	const int bufferIndex = 0; // TODO: If we make the buffer a utility, will need to change this. 
+	cbAddress += bufferIndex * this->worldViewProjBuffer->byteCountPerElement;
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	cbvDesc.BufferLocation = cbAddress;
+	cbvDesc.SizeInBytes = this->worldViewProjBuffer->byteCountPerElement;
+
+	this->device->CreateConstantBufferView(
+		&cbvDesc,
+		this->cbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void
