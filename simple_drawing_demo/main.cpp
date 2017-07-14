@@ -57,10 +57,8 @@ DemoWindow::DemoWindow(const wstring& name, uint clientWidth, uint clientHeight,
 	this->buildBufferForShaders();
 	this->buildRootSignature();
 	this->buildPSO();
-
-	this->flush();
-	this->boxMesh.cleanUpLoadArtifacts();
 }
+
 
 // TODO: UPLOAD BUFFER
 void
