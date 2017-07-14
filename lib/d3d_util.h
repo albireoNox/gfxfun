@@ -29,6 +29,15 @@ hrThrowIfFailed(HRESULT hr, Microsoft::WRL::ComPtr<ID3DBlob> errBlob)
 	return hrThrowIfFailed(hr);
 }
 
+inline void SetDebugObjectName(
+	ID3D12Object* resource,
+	const wchar_t* name)
+{
+#if defined(_DEBUG) || defined(PROFILE)
+	hrThrowIfFailed(resource->SetName(name));
+#endif
+}
+
 void
 setUpDebugWindow();
 

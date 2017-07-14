@@ -34,6 +34,7 @@ D3DRenderTarget::D3DRenderTarget(
 	// Create descriptor
 	device->CreateRenderTargetView(
 		this->swapChainBuffer.Get(), nullptr, rtvHeapHandle);
+	SetDebugObjectName(this->swapChainBuffer.Get(), L"SWAP CHAIN BUFFER");
 
 	// D2D
 	D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };

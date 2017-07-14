@@ -203,6 +203,7 @@ createDefaultBuffer(
 		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS(defaultBuffer.GetAddressOf())));
+	SetDebugObjectName(defaultBuffer.Get(), L"DEFAULT BUFFER");
 
 	// In order to copy CPU memory data into our default buffer, we need to create
 	// an intermediate upload heap. 
@@ -213,6 +214,7 @@ createDefaultBuffer(
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
+	SetDebugObjectName(uploadBuffer.Get(), L"UPLOAD BUFFER");
 
 
 	// Describe the data we want to copy into the default buffer.
