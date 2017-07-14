@@ -20,7 +20,7 @@ public:
 			nullptr,
 			IID_PPV_ARGS(this->uploadBuffer.GetAddressOf())));
 
-		hrThrowIfFailed(this->uploadBuffer->Map(0, nullptr, &this->mappedData));
+		hrThrowIfFailed(this->uploadBuffer->Map(0, nullptr, (void**)&this->mappedData));
 	}
 
 	~UploadBuffer()
@@ -47,7 +47,7 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> uploadBuffer;
-	void* mappedData = nullptr;
+	BYTE* mappedData = nullptr;
 
 	uint elementCount;
 	bool isConstant;
