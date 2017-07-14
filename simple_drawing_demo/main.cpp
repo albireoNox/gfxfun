@@ -15,6 +15,7 @@
 // Shaders
 #include "VertexShader.h"
 #include "PixelShader.h"
+#include "lib/math.h"
 
 using namespace std;
 using namespace DirectX;
@@ -37,6 +38,7 @@ protected:
 	void setUpRootSignatureForDraw(); // TODO figure out what to do with this. 
 
 	ID3D12PipelineState* getPso() override;
+	void onResize(uint newX, uint newY) override;
 	void draw() override;
 
 	DemoBox boxMesh;
@@ -47,6 +49,15 @@ protected:
 	ComPtr<ID3D12RootSignature> rootSignature = nullptr;
 
 	ComPtr<ID3D12PipelineState> pso = nullptr;
+
+	// VIEW DATA
+	XMFLOAT4X4 mxWorld = Math::Identity4x4();
+	XMFLOAT4X4 mxView = Math::Identity4x4();
+	XMFLOAT4X4 mxProj = Math::Identity4x4();
+
+	float mTheta = 1.5f*XM_PI;
+	float mPhi = XM_PIDIV4;
+	float mRadius = 5.0f;
 };
 
 
@@ -157,11 +168,42 @@ DemoWindow::setUpRootSignatureForDraw()
 	this->cmdList->SetGraphicsRootDescriptorTable(0, this->cbvHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
-
 void
 DemoWindow::update()
 {
+	// Convert Spherical to Cartesian coordinates.
+	float x = mRadius*sinf(mPhi)*cosf(mTheta);
+	float z = mRadius*sinf(mPhi)*sinf(mTheta);
+	float y = mRadius*cosf(mPhi);
+
+	// Build the view matrix.
+	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+	XMVECTOR target = XMVectorZero();
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	XMStoreFloat4x4(&this->mxView, view);
+
+	XMMATRIX world = XMLoadFloat4x4(&this->mxWorld);
+	XMMATRIX proj = XMLoadFloat4x4(&this->mxProj);
+	XMMATRIX worldViewProj = world*view*proj;
+
+	// Update the constant buffer with the latest worldViewProj matrix.
+	XMFLOAT4X4 mxOut;
+	XMStoreFloat4x4(&mxOut, XMMatrixTranspose(worldViewProj));
+
+	this->worldViewProjBuffer->copyData(0, mxOut);
+
 	this->render();
+}
+
+void 
+DemoWindow::onResize(uint newX, uint newY)
+{
+	// The window resized, so update the aspect ratio and recompute the projection matrix.
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*Math::Pi, (float)newX / newY, 1.0f, 1000.0f);
+	XMStoreFloat4x4(&this->mxProj, P);
+	__super::onResize(newX, newY);
 }
 
 ID3D12PipelineState*
