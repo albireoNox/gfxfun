@@ -322,6 +322,8 @@ D3DWindow::initializeDepthStencilBuffer()
 		D3D12_RESOURCE_STATE_COMMON,
 		&optClear,
 		IID_PPV_ARGS(this->depthStencilBuffer.GetAddressOf())));
+	SetDebugObjectName(this->depthStencilBuffer.Get(), L"DEPTH STENCIL BUFFER");
+
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
 	this->device->CreateDepthStencilView(
