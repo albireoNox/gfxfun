@@ -10,6 +10,7 @@
 #include <d2d1_3.h>
 #include <vector>
 #include "stopwatch.h"
+#include <memory>
 
 /**
 * Render Targets for D3D and D2D. There should be one per swap
