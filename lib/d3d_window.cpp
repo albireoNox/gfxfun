@@ -132,7 +132,7 @@ D3DWindow::getDepthStencilView() const
 D3DRenderTarget&
 D3DWindow::currentRenderTarget()
 {
-	return this->renderTargets[this->currentBackBuffer];
+	return *this->renderTargets[this->currentBackBuffer];
 }
 
 void
@@ -272,7 +272,7 @@ D3DWindow::initializeRenderTargets()
 		this->rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (uint i = 0; i < D3DWindow::SWAPCHAIN_BUFFER_COUNT; i++)
 	{
-		this->renderTargets.push_back(D3DRenderTarget(
+		this->renderTargets.push_back(std::make_unique<D3DRenderTarget>(
 			this->device.Get(),
 			this->d3d11On12Device.Get(),
 			this->d2dDevice.Get(),

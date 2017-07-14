@@ -16,7 +16,7 @@
 * chain buffer. Shares lifetime with application, but must be
 * recreated when the window size changes.
 */
-class D3DRenderTarget
+class D3DRenderTarget : public NON_COPYABLE
 {
 public:
 
@@ -101,10 +101,10 @@ protected:
 	Microsoft::WRL::ComPtr<IDXGISwapChain>            swapChain;
 
 	// Render Target View
-	uint                                         rtvDescriptorSize;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	uint                                         currentBackBuffer;
-	std::vector<D3DRenderTarget>                 renderTargets;
+	uint                                          rtvDescriptorSize;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>  rtvHeap;
+	uint                                          currentBackBuffer;
+	std::vector<std::unique_ptr<D3DRenderTarget>> renderTargets;
 
 	// Depth/Stencil View
 	uint                                         dsvDescriptorSize;
