@@ -168,7 +168,6 @@ getCommandList(ID3D12Device* device, ID3D12CommandAllocator* cmdAllocator)
 		nullptr,
 		IID_PPV_ARGS(cmdList.GetAddressOf())));
 
-	cmdList->Close();
 	return cmdList;
 }
 

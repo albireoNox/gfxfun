@@ -139,7 +139,18 @@ void
 D3DWindow::onCreate()
 {
 	__super::onCreate();
-	this->onResize(this->clientWidth, this->clientHeight);
+	this->finalizeWindowSetup();
+}
+
+void
+D3DWindow::finalizeWindowSetup()
+{
+	this->initializeRenderTargets();
+	this->initializeDepthStencilBuffer();
+
+	hrThrowIfFailed(this->cmdList->Close());
+	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
+	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
 
 void
@@ -151,19 +162,16 @@ D3DWindow::onResize(uint newClientWidth, uint newClientHeight)
 	assert(this->swapChain);
 	assert(this->cmdAllocator);
 
-	this->clearRenderTargets();
-
 	// Flush before changing any resources.
 	this->flush();
 
-	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), nullptr));
+	this->clearRenderTargets();
 
-	this->initializeRenderTargets();
-	this->initializeDepthStencilBuffer();
+	hrThrowIfFailed(this->cmdAllocator->Reset());
+	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), this->getPso()));
 
-	hrThrowIfFailed(this->cmdList->Close());
-	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
-	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	this->finalizeWindowSetup();
+	this->flush();
 
 	this->render();
 

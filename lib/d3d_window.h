@@ -72,6 +72,7 @@ private:
 	void clearRenderTargets();
 	void initializeRenderTargets();
 	void initializeDepthStencilBuffer();
+	void finalizeWindowSetup();
 	void createSwapChain();
 	void createDescriptorHeaps();
 	void initD2d();
