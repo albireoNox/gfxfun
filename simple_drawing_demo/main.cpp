@@ -39,6 +39,7 @@ protected:
 
 	ID3D12PipelineState* getPso() override;
 	void onResize(uint newX, uint newY) override;
+	void onCharInput(wchar_t ch) override;
 	void draw() override;
 
 	DemoBox boxMesh;
@@ -225,6 +226,28 @@ DemoWindow::draw()
 
 	this->boxMesh.draw(this->cmdList.Get());
 }
+
+void DemoWindow::onCharInput(wchar_t ch)
+{
+	const float delta = 0.05;
+	switch (ch)
+	{
+	case 'a':
+		this->mTheta += delta;
+		break;
+	case 'd':
+		this->mTheta -= delta;
+		break;
+	case 'w':
+		this->mPhi += delta;
+		break;
+	case 's':
+		this->mPhi -= delta;
+		break;
+	}
+	__super::onCharInput(ch);
+}
+
 
 void
 runMsgLoop(DemoWindow& window)
