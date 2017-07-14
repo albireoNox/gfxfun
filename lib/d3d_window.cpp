@@ -244,7 +244,7 @@ D3DWindow::render()
 	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
 	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	this->d3dDeviceContext->Flush();
+//	this->d3dDeviceContext->Flush();
 	this->flush();
 
 	hrThrowIfFailed(this->swapChain->Present(1, 0));
@@ -259,7 +259,7 @@ D3DWindow::clearRenderTargets()
 {
 	// Release the previous resources we will be recreating.
 	this->renderTargets.clear();
-	this->d3dDeviceContext->Flush();
+//	this->d3dDeviceContext->Flush();
 }
 
 void
