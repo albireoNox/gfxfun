@@ -27,7 +27,7 @@ public:
 		wstring text = L"Draw to Buffer ";
 		text += this->currentBackBuffer == 0 ? L"0" : L"1";
 
-		D3DRenderTarget renderTarget = this->currentRenderTarget();
+		D3DRenderTarget& renderTarget = this->currentRenderTarget();
 
 		this->d3d11On12Device->AcquireWrappedResources(
 			renderTarget.wrappedSwapChainBuffer.GetAddressOf(), 1);
