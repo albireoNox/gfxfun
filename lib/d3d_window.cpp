@@ -145,6 +145,15 @@ D3DWindow::onCreate()
 void
 D3DWindow::finalizeWindowSetup()
 {
+	this->screenViewport.TopLeftX = 0;
+	this->screenViewport.TopLeftY = 0;
+	this->screenViewport.Width = static_cast<float>(this->clientWidth);
+	this->screenViewport.Height = static_cast<float>(this->clientHeight);
+	this->screenViewport.MinDepth = 0.0f;
+	this->screenViewport.MaxDepth = 1.0f;
+
+	this->scissorRect = { 0, 0, (LONG)this->clientWidth, (LONG)this->clientHeight };
+
 	this->initializeRenderTargets();
 	this->initializeDepthStencilBuffer();
 
@@ -207,6 +216,9 @@ D3DWindow::render()
 	// Reset command list objects. 
 	hrThrowIfFailed(this->cmdAllocator->Reset());
 	hrThrowIfFailed(this->cmdList->Reset(this->cmdAllocator.Get(), this->getPso()));
+
+	this->cmdList->RSSetViewports(1, &this->screenViewport);
+	this->cmdList->RSSetScissorRects(1, &this->scissorRect);
 
 	this->cmdList->ResourceBarrier(
 		1,

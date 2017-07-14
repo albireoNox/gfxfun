@@ -102,6 +102,9 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cmdList;
 	Microsoft::WRL::ComPtr<IDXGISwapChain>            swapChain;
 
+	D3D12_VIEWPORT screenViewport;
+	D3D12_RECT     scissorRect;
+
 	// Render Target View
 	uint                                          rtvDescriptorSize;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>  rtvHeap;
