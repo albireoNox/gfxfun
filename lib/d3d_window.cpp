@@ -14,6 +14,10 @@
 #include <DirectXColors.h>
 #include <iomanip>
 
+// Define if you want to disable operations that break the pix debugger. 
+// Will cause any apps that use D2D functionality to break.
+//#define ENABLE_PIX_DEBUG
+
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
@@ -256,7 +260,9 @@ D3DWindow::render()
 	ID3D12CommandList* cmdsLists[] = { this->cmdList.Get() };
 	this->cmdQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-//	this->d3dDeviceContext->Flush();
+#ifndef ENABLE_PIX_DEBUG
+	this->d3dDeviceContext->Flush();
+#endif
 	this->flush();
 
 	hrThrowIfFailed(this->swapChain->Present(1, 0));
@@ -271,7 +277,9 @@ D3DWindow::clearRenderTargets()
 {
 	// Release the previous resources we will be recreating.
 	this->renderTargets.clear();
-//	this->d3dDeviceContext->Flush();
+#ifndef ENABLE_PIX_DEBUG
+	this->d3dDeviceContext->Flush();
+#endif
 }
 
 void
