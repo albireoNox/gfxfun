@@ -1,2 +1,8 @@
 <TODO: UPLOAD BUFFER>
 Move the upload buffer stuff into a utility class so it can be reused. Find some way to integrate with the window base class. 
+
+<>
+Create a wrapper for a descriptor heap. Will have methods that:
+  - Return a CPU/GPU descriptor handle at an index in the heap
+  - Return a root parameter for the heap
+  - (Maybe) bind a descriptor (at an index) as a root argument
