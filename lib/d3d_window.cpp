@@ -431,8 +431,7 @@ D3DWindow::initD2d()
 			__uuidof(ID2D1Factory3),
 			nullptr,
 			&this->d2dFactory));
-	this->d2dFactory->GetDesktopDpi(&this->dpiX, &this->dpiY);
-
+	this->dpiX = this->dpiY = GetDpiForWindow(this->windowHandle);
 	ComPtr<IDXGIDevice> dxgiDevice;
 	hrThrowIfFailed(this->d3d11On12Device.As(&dxgiDevice));
 
